@@ -129,7 +129,12 @@ object Board {
           }
         } else if (m.t - m.y == 1 && (Move.alphaIndex(m.x) - Move.alphaIndex(m.z)).abs == 1) {
           Board.getPiece(b, m.z, m.t) match {
-            case Some(_) => true
+            case Some(p2) => {
+              (Player.getPlayer(p), Player.getPlayer(p2)) match {
+                case (White, White) => false
+                case _ => true
+              }
+            }
             case None => false
           }
         } else {
