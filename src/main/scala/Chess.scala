@@ -146,7 +146,31 @@ object Board {
       case WhiteKing => true
       case WhiteBishop => true
       case WhiteKnight => true
-      case BlackPawn => true
+      case BlackPawn => {
+        if (m.y == 7 && m.t == 5 && m.x == m.z) {
+          (Board.getPiece(b, m.z, m.t), Board.getPiece(b, m.z, m.t+1)) match {
+            case (None, None) => true
+            case (_, _) => false
+          }
+        } else if (m.y - m.t == 1 && m.x == m.z) {
+          Board.getPiece(b, m.z, m.t) match {
+            case None => true
+            case _ => false
+          }
+        } else if (m.y - m.t == 1 && (Move.alphaIndex(m.x) - Move.alphaIndex(m.z)).abs == 1) {
+          Board.getPiece(b, m.z, m.t) match {
+            case Some(p2) => {
+              (Player.getPlayer(p), Player.getPlayer(p2)) match {
+                case (Black, Black) => false
+                case _ => true
+              }
+            }
+            case None => false
+          }
+        } else {
+          false
+        }
+      }
       case BlackRook => true
       case BlackQueen => true
       case BlackKing => true
