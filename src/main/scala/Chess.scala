@@ -46,7 +46,7 @@ sealed abstract class Player
 case object White extends Player
 case object Black extends Player
 
-object Board {
+object ChessGame {
   var currentPlayer: Player = White
 
   def toString(b: Board): String = {
@@ -76,14 +76,14 @@ object Board {
     new Board(b)
   }
   def move(b: Board, m: Move): Option[String] =  {
-    Board.getPiece(b, m.x, m.y) match {
+    ChessGame.getPiece(b, m.x, m.y) match {
       case None => Some(s"No piece in ${m.x}${m.y}.")
       case Some(p) => {
         (currentPlayer, Player.getPlayer(p)) match {
           case (White, White) | (Black, Black) => {
-            if(Board.validMove(b, p, m)) {
-              Board._move(b, p, m);
-              currentPlayer = Board.switchPlayer(currentPlayer);
+            if(ChessGame.validMove(b, p, m)) {
+              ChessGame._move(b, p, m);
+              currentPlayer = ChessGame.switchPlayer(currentPlayer);
               None
             } else {
               Some("Invalid move.")
@@ -115,68 +115,90 @@ object Board {
     b.board(Move.alphaIndex(m.x))(m.y - 1) = None
   }
   def validMove(b: Board, p: Piece, m: Move): Boolean =  {
-    p match {
-      case WhitePawn => {
-        if (m.y == 2 && m.t == 4 && m.x == m.z) {
-          (Board.getPiece(b, m.z, m.t), Board.getPiece(b, m.z, m.t-1)) match {
-            case (None, None) => true
-            case (_, _) => false
-          }
-        } else if (m.t - m.y == 1 && m.x == m.z) {
-          Board.getPiece(b, m.z, m.t) match {
-            case None => true
-            case _ => false
-          }
-        } else if (m.t - m.y == 1 && (Move.alphaIndex(m.x) - Move.alphaIndex(m.z)).abs == 1) {
-          Board.getPiece(b, m.z, m.t) match {
-            case Some(p2) => {
-              (Player.getPlayer(p), Player.getPlayer(p2)) match {
-                case (White, White) => false
-                case _ => true
-              }
-            }
-            case None => false
-          }
-        } else {
-          false
-        }
+    if(m.x == m.z && m.y == m.t) {
+      false
+    } else {
+      p match {
+        case WhitePawn => validWhitePawnMove(b, p, m)
+        case WhiteRook => true
+        case WhiteQueen | BlackQueen => validQueenMove(b, p, m)
+        case WhiteKing => true
+        case WhiteBishop => true
+        case WhiteKnight => true
+        case BlackPawn => validBlackPawnMove(b, p, m)
+        case BlackRook => true
+        case BlackKing => true
+        case BlackBishop => true
+        case BlackKnight => true
       }
-      case WhiteRook => true
-      case WhiteQueen => true
-      case WhiteKing => true
-      case WhiteBishop => true
-      case WhiteKnight => true
-      case BlackPawn => {
-        if (m.y == 7 && m.t == 5 && m.x == m.z) {
-          (Board.getPiece(b, m.z, m.t), Board.getPiece(b, m.z, m.t+1)) match {
-            case (None, None) => true
-            case (_, _) => false
-          }
-        } else if (m.y - m.t == 1 && m.x == m.z) {
-          Board.getPiece(b, m.z, m.t) match {
-            case None => true
-            case _ => false
-          }
-        } else if (m.y - m.t == 1 && (Move.alphaIndex(m.x) - Move.alphaIndex(m.z)).abs == 1) {
-          Board.getPiece(b, m.z, m.t) match {
-            case Some(p2) => {
-              (Player.getPlayer(p), Player.getPlayer(p2)) match {
-                case (Black, Black) => false
-                case _ => true
-              }
-            }
-            case None => false
-          }
-        } else {
-          false
-        }
-      }
-      case BlackRook => true
-      case BlackQueen => true
-      case BlackKing => true
-      case BlackBishop => true
-      case BlackKnight => true
+
     }
+  }
+  def validWhitePawnMove(b: Board, p: Piece, m: Move): Boolean =  {
+    if (m.y == 2 && m.t == 4 && m.x == m.z) {
+      (ChessGame.getPiece(b, m.z, m.t), ChessGame.getPiece(b, m.z, m.t-1)) match {
+        case (None, None) => true
+        case (_, _) => false
+      }
+    } else if (m.t - m.y == 1 && m.x == m.z) {
+      ChessGame.getPiece(b, m.z, m.t) match {
+        case None => true
+        case _ => false
+      }
+    } else if (m.t - m.y == 1 && (Move.alphaIndex(m.x) - Move.alphaIndex(m.z)).abs == 1) {
+      ChessGame.getPiece(b, m.z, m.t) match {
+        case Some(p2) => {
+          (Player.getPlayer(p), Player.getPlayer(p2)) match {
+            case (White, White) => false
+            case _ => true
+          }
+        }
+        case None => false
+      }
+    } else {
+      false
+    }
+  }
+  def validQueenMove(b: Board, p: Piece, m: Move): Boolean =  {
+    if ((m.t - m.y).abs <= 1 && (Move.alphaIndex(m.x) - Move.alphaIndex(m.z)).abs <= 1) {
+      ChessGame.getPiece(b, m.z, m.t) match {
+        case Some(p2) => {
+          (Player.getPlayer(p), Player.getPlayer(p2)) match {
+            case (White, White) | (Black, Black) => false
+            case _ => true
+          }
+        }
+        case None => true
+      }
+    } else {
+      false
+    }
+  }
+  def validBlackPawnMove(b: Board, p: Piece, m: Move): Boolean =  {
+    if (m.y == 7 && m.t == 5 && m.x == m.z) {
+      (ChessGame.getPiece(b, m.z, m.t), ChessGame.getPiece(b, m.z, m.t+1)) match {
+        case (None, None) => true
+        case (_, _) => false
+      }
+    } else if (m.y - m.t == 1 && m.x == m.z) {
+      ChessGame.getPiece(b, m.z, m.t) match {
+        case None => true
+        case _ => false
+      }
+    } else if (m.y - m.t == 1 && (Move.alphaIndex(m.x) - Move.alphaIndex(m.z)).abs == 1) {
+      ChessGame.getPiece(b, m.z, m.t) match {
+        case Some(p2) => {
+          (Player.getPlayer(p), Player.getPlayer(p2)) match {
+            case (Black, Black) => false
+            case _ => true
+          }
+        }
+        case None => false
+      }
+    } else {
+      false
+    }
+
   }
 }
 case class Board(val board: Array[Array[Option[Piece]]])
@@ -195,16 +217,16 @@ case class Move(val x: Char, val y: Int, val z: Char, val t: Int)
 
 object Chess {
   def main(args: Array[String]) {
-    val b = Board.newBoard()
+    val b = ChessGame.newBoard()
     while(true) {
-      println(Board.toString(b))
+      println(ChessGame.toString(b))
       print("> ")
       val move = """([a-hA-H])([1-8])[ ]*([a-hA-H])([1-8])""".r
       val scanner = new java.util.Scanner(System.in)
       val line = scanner.nextLine()
       line match {
         case move(x, y, z, t) => {
-          Board.move(b, new Move(x.toLowerCase()(0), y.toInt, z.toLowerCase()(0), t.toInt)) match {
+          ChessGame.move(b, new Move(x.toLowerCase()(0), y.toInt, z.toLowerCase()(0), t.toInt)) match {
             case None => 
             case Some(s) => println(s)
           }
