@@ -213,7 +213,8 @@ case class Move(val x: Char, val y: Int, val z: Char, val t: Int)
 object Chess {
   def main(args: Array[String]) {
     var cg = ChessGame.newChessGame()
-    while(true) {
+    var running = true
+    while(running) {
       println(ChessGame.toString(cg))
       print("> ")
       val move = """([a-hA-H])([1-8])[ ]*([a-hA-H])([1-8])""".r
@@ -226,6 +227,8 @@ object Chess {
             case Left(x) => println(x)
           }
         }
+        case "restart()" | "r" => cg = ChessGame.newChessGame()
+        case "exit()" | "e" => running = false
         case _ => println("Invalid move syntax.")
       }
     }
