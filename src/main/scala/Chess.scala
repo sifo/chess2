@@ -49,7 +49,7 @@ case object Black extends Player
 object ChessGame {
 
   def toString(cg: ChessGame): String = {
-    var res = "\n  # Game board\n\n"
+    var res = "\n"
     for(j <- cg.board(0).length - 1 to 0 by -1){
       res += "  " + (j + 1) + "  "
       for(i <- 0 to cg.board.length - 1){
@@ -72,7 +72,7 @@ object ChessGame {
         Array(Some(WhiteKnight), Some(WhitePawn), None, None, None, None, Some(BlackPawn), Some(BlackKnight)),
         Array(Some(WhiteRook), Some(WhitePawn), None, None, None, None, Some(BlackPawn), Some(BlackRook))
       )
-    new ChessGame(cg, White)
+    ChessGame(cg, White)
   }
   def move(cg: ChessGame, m: Move): Either[String, ChessGame] =  {
     ChessGame.getPiece(cg, m.x, m.y) match {
@@ -196,7 +196,23 @@ object ChessGame {
 
   }
 }
-case class ChessGame(val board: Array[Array[Option[Piece]]], val currentPlayer: Player)
+case class ChessGame(val board: Array[Array[Option[Piece]]], val currentPlayer: Player) {
+  override def equals(that: Any): Boolean =
+    that match {
+      case that: ChessGame =>
+        for(i <- 0 to this.board.length - 1){
+          for(j <- 0 to this.board(i).length - 1){
+            (this.board(i)(j), that.board(i)(j)) match {
+              case (None, None) =>
+              case (None, Some(_)) | (Some(_), None) => return false
+              case (Some(a), Some(b)) => if(a != b) return false
+            }
+          }
+        }
+        return this.currentPlayer == that.currentPlayer
+      case _ => return false
+    }
+}
 
 object Move {
   def alphaIndex(c: Char): Int = {
@@ -222,13 +238,13 @@ object Chess {
       val line = scanner.nextLine()
       line match {
         case move(x, y, z, t) => {
-          ChessGame.move(cg, new Move(x.toLowerCase()(0), y.toInt, z.toLowerCase()(0), t.toInt)) match {
+          ChessGame.move(cg, Move(x.toLowerCase()(0), y.toInt, z.toLowerCase()(0), t.toInt)) match {
             case Right(x) => cg = x
             case Left(x) => println(x)
           }
         }
-        case "restart()" | "r" => cg = ChessGame.newChessGame()
-        case "exit()" | "e" => running = false
+        case "restart" | "r" => cg = ChessGame.newChessGame()
+        case "exit" | "e" => running = false
         case _ => println("Invalid move syntax.")
       }
     }
