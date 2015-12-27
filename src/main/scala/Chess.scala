@@ -48,6 +48,10 @@ case object Black extends Player
 
 object ChessGame {
 
+  def apply(b: String, p: Player) = new ChessGame(b, p)
+  def apply(b: String) = new ChessGame(b)
+  def apply() = new ChessGame()
+
   def toString(cg: ChessGame): String = {
     var res = "\n"
     for(j <- cg.board(0).length - 1 to 0 by -1){
@@ -59,20 +63,6 @@ object ChessGame {
     }
     res += "\n     a b c d e f g h\n"
     res
-  }
-  def newChessGame(): ChessGame = {
-    val cg: Array[Array[Option[Piece]]] =
-      Array(
-        Array(Some(WhiteRook), Some(WhitePawn), None, None, None, None, Some(BlackPawn), Some(BlackRook)),
-        Array(Some(WhiteKnight), Some(WhitePawn), None, None, None, None, Some(BlackPawn), Some(BlackKnight)),
-        Array(Some(WhiteBishop), Some(WhitePawn), None, None, None, None, Some(BlackPawn), Some(BlackBishop)),
-        Array(Some(WhiteQueen), Some(WhitePawn), None, None, None, None, Some(BlackPawn), Some(BlackQueen)),
-        Array(Some(WhiteKing), Some(WhitePawn), None, None, None, None, Some(BlackPawn), Some(BlackKing)),
-        Array(Some(WhiteBishop), Some(WhitePawn), None, None, None, None, Some(BlackPawn), Some(BlackBishop)),
-        Array(Some(WhiteKnight), Some(WhitePawn), None, None, None, None, Some(BlackPawn), Some(BlackKnight)),
-        Array(Some(WhiteRook), Some(WhitePawn), None, None, None, None, Some(BlackPawn), Some(BlackRook))
-      )
-    ChessGame(cg, White)
   }
   def move(cg: ChessGame, m: Move): Either[String, ChessGame] =  {
     ChessGame.getPiece(cg, m.x, m.y) match {
@@ -107,7 +97,7 @@ object ChessGame {
       case _ => cg.board(Move.alphaIndex(m.z))(m.t - 1) = cg.board(Move.alphaIndex(m.x))(m.y - 1)
     }
     cg.board(Move.alphaIndex(m.x))(m.y - 1) = None
-    new ChessGame(cg.board, ChessGame.switchPlayer(cg.currentPlayer))
+    ChessGame(cg.board, ChessGame.switchPlayer(cg.currentPlayer))
   }
   def validMove(cg: ChessGame, p: Piece, m: Move): Boolean =  {
     if(m.x == m.z && m.y == m.t) {
@@ -193,10 +183,62 @@ object ChessGame {
     } else {
       false
     }
-
+  }
+  def convertChar(s: Char): Option[Piece] = {
+    s match {
+      case '♖' => Some(WhiteRook)
+      case '♘' => Some(WhiteKnight)
+      case '♗' => Some(WhiteBishop)
+      case '♕' => Some(WhiteQueen)
+      case '♔' => Some(WhiteKing)
+      case '♙' => Some(WhitePawn)
+      case '♜' => Some(BlackRook)
+      case '♞' => Some(BlackKnight)
+      case '♝' => Some(BlackBishop)
+      case '♛' => Some(BlackQueen)
+      case '♚' => Some(BlackKing)
+      case '♟' => Some(BlackPawn)
+      case _ => None
+    }
+  }
+  def convert(s: String): Array[Array[Option[Piece]]] = {
+    val p = List('♖', '♘', '♗', '♕', '♔', '♙', '♜', '♞',  '♝',  '♛',  '♚',  '♟',  '.')
+    val l = {
+      val tmp = s.filter(p.contains(_)).toCharArray.map(convertChar(_))
+      if(tmp.length != 64) 
+        "♜♞♝♛♚♝♞♜♟♟♟♟♟♟♟♟................................♙♙♙♙♙♙♙♙♖♘♗♕♔♗♘♖".toCharArray.map(convertChar(_))
+      else
+        tmp
+    }
+    val len = 8
+    val arr = Array.ofDim[Option[Piece]](len, len)
+    for(i <- 0 to len - 1) {
+      for(j <- 0 to len - 1) {
+        arr(i)(j) = l(len * (len-1-j) + i)
+      }
+    }
+    arr
   }
 }
 case class ChessGame(val board: Array[Array[Option[Piece]]], val currentPlayer: Player) {
+  def this(board: String, currentPlayer: Player) {
+    this(ChessGame.convert(board), currentPlayer)
+  }
+  def this() {
+    this("""
+      ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+      ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+      . . . . . . . .
+      . . . . . . . .
+      . . . . . . . .
+      . . . . . . . .
+      ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+      ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+      """, White)
+  }
+  def this(board: String) {
+    this(board, White)
+  }
   override def equals(that: Any): Boolean =
     that match {
       case that: ChessGame =>
@@ -228,10 +270,11 @@ case class Move(val x: Char, val y: Int, val z: Char, val t: Int)
 
 object Chess {
   def main(args: Array[String]) {
-    var cg = ChessGame.newChessGame()
+    var cg = ChessGame()
     var running = true
     while(running) {
       println(ChessGame.toString(cg))
+      println(s"${cg.currentPlayer} turn.")
       print("> ")
       val move = """([a-hA-H])([1-8])[ ]*([a-hA-H])([1-8])""".r
       val scanner = new java.util.Scanner(System.in)
@@ -243,7 +286,7 @@ object Chess {
             case Left(x) => println(x)
           }
         }
-        case "restart" | "r" => cg = ChessGame.newChessGame()
+        case "restart" | "r" => cg = ChessGame()
         case "exit" | "e" => running = false
         case _ => println("Invalid move syntax.")
       }
