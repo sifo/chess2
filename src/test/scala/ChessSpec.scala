@@ -3,19 +3,40 @@ package com.heapseven.chess
 import org.scalatest._
 
 class ChessSpec extends FunSpec with Matchers  {
+  describe("Position invalid") {
+    it("should be rejected"){
+      val result = {
+        val b = """
+          8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+          7   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+          6   . . . . . . . .
+          5   . . . . . . . .
+          4   . . . . . . . .
+          3   . . . . . . . .
+          2   ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+          1   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+
+              a b c d e f g h
+        """
+        val m = Move(Position('d', 2), Position('d', 9))
+        ChessGame.move(ChessGame(b, White), m)
+      }
+      result should be ('left)
+    }
+  }
   describe("white pawn") {
     describe("move") {
       it("should be 1 square ahead") {
         val result = {
           val b = """
-            1   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
-            2   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
-            3   . . . . . . . .
-            4   . . . . . . . .
-            5   . . . . . . . .
+            8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+            7   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
             6   . . . . . . . .
-            7   ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
-            8   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+            5   . . . . . . . .
+            4   . . . . . . . .
+            3   . . . . . . . .
+            2   ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
 
                 a b c d e f g h
           """
@@ -24,14 +45,14 @@ class ChessSpec extends FunSpec with Matchers  {
         }
         val expected = {
           val b = """
-            1   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
-            2   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
-            3   . . . . . . . .
-            4   . . . . . . . .
+            8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+            7   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+            6   . . . . . . . .
             5   . . . . . . . .
-            6   . . . ♙ . . . .
-            7   ♙ ♙ ♙ . ♙ ♙ ♙ ♙
-            8   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+            4   . . . . . . . .
+            3   . . . ♙ . . . .
+            2   ♙ ♙ ♙ . ♙ ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
 
                 a b c d e f g h
           """
@@ -42,14 +63,14 @@ class ChessSpec extends FunSpec with Matchers  {
       it("should be 2 squares ahead"){
         val result = {
           val b = """
-            1   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
-            2   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
-            3   . . . . . . . .
-            4   . . . . . . . .
-            5   . . . . . . . .
+            8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+            7   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
             6   . . . . . . . .
-            7   ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
-            8   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+            5   . . . . . . . .
+            4   . . . . . . . .
+            3   . . . . . . . .
+            2   ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
 
                 a b c d e f g h
           """
@@ -58,14 +79,14 @@ class ChessSpec extends FunSpec with Matchers  {
         }
         val expected = {
           val b = """
-            1   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
-            2   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
-            3   . . . . . . . .
-            4   . . . . . . . .
-            5   . . . ♙ . . . .
+            8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+            7   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
             6   . . . . . . . .
-            7   ♙ ♙ ♙ . ♙ ♙ ♙ ♙
-            8   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+            5   . . . . . . . .
+            4   . . . ♙ . . . .
+            3   . . . . . . . .
+            2   ♙ ♙ ♙ . ♙ ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
 
                 a b c d e f g h
           """
@@ -76,14 +97,14 @@ class ChessSpec extends FunSpec with Matchers  {
       it("should not be 3 squares ahead"){
         val result = {
           val b = """
-            1   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
-            2   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
-            3   . . . . . . . .
-            4   . . . . . . . .
-            5   . . . . . . . .
+            8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+            7   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
             6   . . . . . . . .
-            7   ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
-            8   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+            5   . . . . . . . .
+            4   . . . . . . . .
+            3   . . . . . . . .
+            2   ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
 
                 a b c d e f g h
           """
