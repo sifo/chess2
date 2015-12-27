@@ -19,7 +19,8 @@ class ChessSpec extends FunSpec with Matchers  {
 
                 a b c d e f g h
           """
-          ChessGame.move(ChessGame(b, White), Move('d', 2, 'd', 3))
+          val m = Move(Position('d', 2), Position('d', 3))
+          ChessGame.move(ChessGame(b, White), m)
         }
         val expected = {
           val b = """
@@ -52,7 +53,8 @@ class ChessSpec extends FunSpec with Matchers  {
 
                 a b c d e f g h
           """
-          ChessGame.move(ChessGame(b, White), Move('d', 2, 'd', 4))
+          val m = Move(Position('d', 2), Position('d', 4))
+          ChessGame.move(ChessGame(b, White), m)
         }
         val expected = {
           val b = """
@@ -85,7 +87,8 @@ class ChessSpec extends FunSpec with Matchers  {
 
                 a b c d e f g h
           """
-          ChessGame.move(ChessGame(b, White), Move('d', 2, 'd', 5))
+          val m = Move(Position('d', 2), Position('d', 5))
+          ChessGame.move(ChessGame(b, White), m)
         }
         result should be ('left)
       }

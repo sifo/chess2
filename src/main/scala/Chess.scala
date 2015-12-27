@@ -65,8 +65,8 @@ object ChessGame {
     res
   }
   def move(cg: ChessGame, m: Move): Either[String, ChessGame] =  {
-    ChessGame.getPiece(cg, m.x, m.y) match {
-      case None => Left(s"No piece in ${m.x}${m.y}.")
+    ChessGame.getPiece(cg, m.src) match {
+      case None => Left(s"No piece in ${m.src.x}${m.src.y}.")
       case Some(p) => {
         (cg.currentPlayer, Player.getPlayer(p)) match {
           case (White, White) | (Black, Black) => {
@@ -87,20 +87,20 @@ object ChessGame {
       case White => Black
     }
   }
-  def getPiece(cg: ChessGame, x: Char, y: Int): Option[Piece] = {
-    cg.board(Move.alphaIndex(x))(y - 1)
+  def getPiece(cg: ChessGame, pos: Position): Option[Piece] = {
+    cg.board(Move.alphaIndex(pos.x))(pos.y - 1)
   }
   def _move(cg: ChessGame, p: Piece, m: Move): ChessGame = {
     p match {
-      case WhitePawn if m.t == 8 => cg.board(Move.alphaIndex(m.z))(m.t - 1) = Some(WhiteQueen)
-      case BlackPawn if m.t == 1 => cg.board(Move.alphaIndex(m.z))(m.t - 1) = Some(BlackQueen)
-      case _ => cg.board(Move.alphaIndex(m.z))(m.t - 1) = cg.board(Move.alphaIndex(m.x))(m.y - 1)
+      case WhitePawn if m.dest.y == 8 => cg.board(Move.alphaIndex(m.dest.x))(m.dest.y - 1) = Some(WhiteQueen)
+      case BlackPawn if m.dest.y == 1 => cg.board(Move.alphaIndex(m.dest.x))(m.dest.y - 1) = Some(BlackQueen)
+      case _ => cg.board(Move.alphaIndex(m.dest.x))(m.dest.y - 1) = cg.board(Move.alphaIndex(m.src.x))(m.src.y - 1)
     }
-    cg.board(Move.alphaIndex(m.x))(m.y - 1) = None
+    cg.board(Move.alphaIndex(m.src.x))(m.src.y - 1) = None
     ChessGame(cg.board, ChessGame.switchPlayer(cg.currentPlayer))
   }
   def validMove(cg: ChessGame, p: Piece, m: Move): Boolean =  {
-    if(m.x == m.z && m.y == m.t) {
+    if(m.src == m.dest) {
       false
     } else {
       p match {
@@ -120,18 +120,18 @@ object ChessGame {
     }
   }
   def validWhitePawnMove(cg: ChessGame, p: Piece, m: Move): Boolean =  {
-    if (m.y == 2 && m.t == 4 && m.x == m.z) {
-      (ChessGame.getPiece(cg, m.z, m.t), ChessGame.getPiece(cg, m.z, m.t-1)) match {
+    if (m.src.y == 2 && m.dest.y == 4 && m.src.x == m.dest.x) {
+      (ChessGame.getPiece(cg, m.dest), ChessGame.getPiece(cg, Position(m.dest.x, m.dest.y-1))) match {
         case (None, None) => true
         case (_, _) => false
       }
-    } else if (m.t - m.y == 1 && m.x == m.z) {
-      ChessGame.getPiece(cg, m.z, m.t) match {
+    } else if (m.dest.y - m.src.y == 1 && m.src.x == m.dest.x) {
+      ChessGame.getPiece(cg, m.dest) match {
         case None => true
         case _ => false
       }
-    } else if (m.t - m.y == 1 && (Move.alphaIndex(m.x) - Move.alphaIndex(m.z)).abs == 1) {
-      ChessGame.getPiece(cg, m.z, m.t) match {
+    } else if (m.dest.x - m.src.y == 1 && (Move.alphaIndex(m.src.x) - Move.alphaIndex(m.dest.x)).abs == 1) {
+      ChessGame.getPiece(cg, m.dest) match {
         case Some(p2) => {
           (Player.getPlayer(p), Player.getPlayer(p2)) match {
             case (White, White) => false
@@ -145,8 +145,8 @@ object ChessGame {
     }
   }
   def validQueenMove(cg: ChessGame, p: Piece, m: Move): Boolean =  {
-    if ((m.t - m.y).abs <= 1 && (Move.alphaIndex(m.x) - Move.alphaIndex(m.z)).abs <= 1) {
-      ChessGame.getPiece(cg, m.z, m.t) match {
+    if ((m.dest.y - m.src.y).abs <= 1 && (Move.alphaIndex(m.src.x) - Move.alphaIndex(m.dest.x)).abs <= 1) {
+      ChessGame.getPiece(cg, m.dest) match {
         case Some(p2) => {
           (Player.getPlayer(p), Player.getPlayer(p2)) match {
             case (White, White) | (Black, Black) => false
@@ -160,18 +160,18 @@ object ChessGame {
     }
   }
   def validBlackPawnMove(cg: ChessGame, p: Piece, m: Move): Boolean =  {
-    if (m.y == 7 && m.t == 5 && m.x == m.z) {
-      (ChessGame.getPiece(cg, m.z, m.t), ChessGame.getPiece(cg, m.z, m.t+1)) match {
+    if (m.src.y == 7 && m.dest.y == 5 && m.src.x == m.src.x) {
+      (ChessGame.getPiece(cg, m.dest), ChessGame.getPiece(cg, Position(m.dest.x, m.dest.y+1))) match {
         case (None, None) => true
         case (_, _) => false
       }
-    } else if (m.y - m.t == 1 && m.x == m.z) {
-      ChessGame.getPiece(cg, m.z, m.t) match {
+    } else if (m.src.y - m.dest.y == 1 && m.src.x == m.dest.x) {
+      ChessGame.getPiece(cg, m.dest) match {
         case None => true
         case _ => false
       }
-    } else if (m.y - m.t == 1 && (Move.alphaIndex(m.x) - Move.alphaIndex(m.z)).abs == 1) {
-      ChessGame.getPiece(cg, m.z, m.t) match {
+    } else if (m.src.y - m.dest.y == 1 && (Move.alphaIndex(m.src.x) - Move.alphaIndex(m.dest.x)).abs == 1) {
+      ChessGame.getPiece(cg, m.dest) match {
         case Some(p2) => {
           (Player.getPlayer(p), Player.getPlayer(p2)) match {
             case (Black, Black) => false
@@ -266,7 +266,8 @@ object Move {
     -1
   }
 }
-case class Move(val x: Char, val y: Int, val z: Char, val t: Int)
+case class Position(val x: Char, val y: Int)
+case class Move(val src: Position, val dest: Position)
 
 object Chess {
   def main(args: Array[String]) {
@@ -283,7 +284,7 @@ object Chess {
       }
       line match {
         case move(x, y, z, t) => {
-          ChessGame.move(cg, Move(x.toLowerCase()(0), y.toInt, z.toLowerCase()(0), t.toInt)) match {
+          ChessGame.move(cg, Move(Position(x.toLowerCase()(0), y.toInt), Position(z.toLowerCase()(0), t.toInt))) match {
             case Right(x) => cg = x
             case Left(x) => println(x)
           }
