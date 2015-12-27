@@ -71,22 +71,29 @@ object ChessGame {
     res
   }
   def move(cg: ChessGame, m: Move): Either[String, ChessGame] =  {
-    if(m.src.x > cg.board.length - 1 || m.src.y > cg.board(m.src.x).length - 1)
-      Left("Invalid move")
-    else cg.board(m.src.x)(m.src.y) match {
-      case None => Left(s"No piece in ${m.src.x}${m.src.y}.")
-      case Some(p) => {
-        (cg.currentPlayer, Player.getPlayer(p)) match {
-          case (White, White) | (Black, Black) => {
-            if(ChessGame.validMove(cg, p, m)) {
-              Right(ChessGame._move(cg, p, m))
-            } else {
-              Left("Invalid move.")
+    cg.status match {
+      case Undecided =>
+        if(m.src.x > cg.board.length - 1 || m.src.y > cg.board(m.src.x).length - 1)
+          Left("Invalid move")
+        else cg.board(m.src.x)(m.src.y) match {
+          case None => Left(s"No piece in ${m.src.x}${m.src.y}.")
+          case Some(p) => {
+            (cg.currentPlayer, Player.getPlayer(p)) match {
+              case (White, White) | (Black, Black) => {
+                if(ChessGame.validMove(cg, p, m)) {
+                  Right(ChessGame._move(cg, p, m))
+                } else {
+                  Left("Invalid move.")
+                }
+              }
+              case (White, Black) | (Black, White) => Left(s"${cg.currentPlayer} turn.")
             }
           }
-          case (White, Black) | (Black, White) => Left(s"${cg.currentPlayer} turn.")
         }
-      }
+      case DrawRequest => Left("""Draw request pending. Type "nodraw" or "draw".""")
+      case Stalemate(p) => Left(s"Stalemate! $p can no longer move.}")
+      case Checkmate(p) => Left(s"${p} wins.}")
+      case PromotionPending(p) => Left(s"Promotion pending for ${p}.}")
     }
   }
   def switchPlayer(p: Player): Player = {
@@ -274,6 +281,7 @@ case class Move(val src: Position, val dest: Position)
 sealed abstract class Status
 case class Checkmate(player: Player) extends Status
 case class Stalemate(player: Player) extends Status
+case class PromotionPending(player: Player) extends Status
 case object DrawRequest extends Status
 case object Undecided extends Status
 
@@ -298,15 +306,24 @@ object Chess {
               cg.status match {
                 case Stalemate(p) => println(s"Stalemate! $p can no longer move.}"); running = false
                 case Checkmate(p) => println(s"${p} wins.}"); running = false
+                case PromotionPending(p) => 
                 case _ => 
               }
-            case Left(x) => println(x)
+            case Left(x) => println("Error: " + x)
           }
         }
         case "draw" | "d" =>
           cg.status match {
             case Undecided => cg = ChessGame(cg.board, cg.currentPlayer.opponent, DrawRequest)
             case DrawRequest => println("It's draw!"); running = false
+            case _ =>
+          }
+        case "nodraw" | "nd" =>
+          cg.status match {
+            case Undecided => println("There is no draw request pending.")
+            case DrawRequest =>
+              cg = ChessGame(cg.board, cg.currentPlayer.opponent, Undecided)
+              println("Draw request denied!")
             case _ =>
           }
         case "restart" | "r" => cg = ChessGame()
