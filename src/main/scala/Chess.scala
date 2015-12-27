@@ -42,9 +42,15 @@ case object Player {
     }
   }
 }
-sealed abstract class Player
-case object White extends Player
-case object Black extends Player
+sealed abstract class Player {
+  def opponent: Player
+}
+case object White extends Player {
+  val opponent = Black
+}
+case object Black extends Player {
+  val opponent = White
+}
 
 object ChessGame {
 
@@ -96,7 +102,7 @@ object ChessGame {
       case _ => cg.board(m.dest.x)(m.dest.y) = cg.board(m.src.x)(m.src.y)
     }
     cg.board(m.src.x)(m.src.y) = None
-    ChessGame(cg.board, ChessGame.switchPlayer(cg.currentPlayer))
+    ChessGame(cg.board, ChessGame.switchPlayer(cg.currentPlayer), Undecided)
   }
   def validMove(cg: ChessGame, p: Piece, m: Move): Boolean =  {
     if(m.src == m.dest) {
@@ -219,9 +225,9 @@ object ChessGame {
     arr
   }
 }
-case class ChessGame(val board: Array[Array[Option[Piece]]], val currentPlayer: Player) {
+case class ChessGame(val board: Array[Array[Option[Piece]]], val currentPlayer: Player, val status: Status) {
   def this(board: String, currentPlayer: Player) {
-    this(ChessGame.convert(board), currentPlayer)
+    this(ChessGame.convert(board), currentPlayer, Undecided)
   }
   def this() {
     this("""
@@ -265,6 +271,12 @@ case class Position(val x: Int, val y: Int) {
 }
 case class Move(val src: Position, val dest: Position)
 
+sealed abstract class Status
+case class Checkmate(player: Player) extends Status
+case class Stalemate(player: Player) extends Status
+case object DrawRequest extends Status
+case object Undecided extends Status
+
 object Chess {
   def main(args: Array[String]) {
     var cg = ChessGame()
@@ -281,13 +293,26 @@ object Chess {
       line match {
         case move(x, y, z, t) => {
           ChessGame.move(cg, Move(Position(x.toLowerCase()(0), y.toInt), Position(z.toLowerCase()(0), t.toInt))) match {
-            case Right(x) => cg = x
+            case Right(x) =>
+              cg = x
+              cg.status match {
+                case Stalemate(p) => println(s"Stalemate! $p can no longer move.}"); running = false
+                case Checkmate(p) => println(s"${p} wins.}"); running = false
+                case _ => 
+              }
             case Left(x) => println(x)
           }
         }
+        case "draw" | "d" =>
+          cg.status match {
+            case Undecided => cg = ChessGame(cg.board, cg.currentPlayer.opponent, DrawRequest)
+            case DrawRequest => println("It's draw!"); running = false
+            case _ =>
+          }
         case "restart" | "r" => cg = ChessGame()
         case "exit" | "e" => running = false
         case "help" | "h" =>
+          println("'d' or 'draw' to ask draw to opponent.")
           println("'r' or 'restart' to restart the game.")
           println("'e' or 'exit' to quit.")
           println("'h' or 'help' for help.")
