@@ -274,11 +274,13 @@ object Chess {
     var running = true
     while(running) {
       println(ChessGame.toString(cg))
-      println(s"${cg.currentPlayer} turn.")
+      println(s"${cg.currentPlayer}:")
       print("> ")
       val move = """([a-hA-H])([1-8])[ ]*([a-hA-H])([1-8])""".r
-      val scanner = new java.util.Scanner(System.in)
-      val line = scanner.nextLine()
+      val line = {
+        val scanner = new java.util.Scanner(System.in)
+        scanner.nextLine()
+      }
       line match {
         case move(x, y, z, t) => {
           ChessGame.move(cg, Move(x.toLowerCase()(0), y.toInt, z.toLowerCase()(0), t.toInt)) match {
