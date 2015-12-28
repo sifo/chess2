@@ -54,6 +54,7 @@ case object Black extends Player {
 
 object ChessGame {
 
+  def apply(b: String, p: Player, s: Status) = new ChessGame(b, p, s)
   def apply(b: String, p: Player) = new ChessGame(b, p)
   def apply(b: String) = new ChessGame(b)
   def apply() = new ChessGame()
@@ -69,6 +70,19 @@ object ChessGame {
     }
     res += "\n     a b c d e f g h\n"
     res
+  }
+  def promote(cg: ChessGame, p: Piece): Either[String, ChessGame] = {
+    cg.status match {
+      case PromotionPending(_, dest) =>
+      (p, cg.currentPlayer, cg.board(dest.x)(dest.y)) match {
+        case (BlackRook | BlackQueen | BlackBishop | BlackKnight, Black, Some(BlackPawn))
+           | (WhiteRook | WhiteQueen | WhiteBishop | WhiteKnight, White, Some(WhitePawn)) =>
+          cg.board(dest.x)(dest.y) = Some(p)
+          Right(ChessGame(cg.board, cg.currentPlayer.opponent, Undecided))
+        case (_, _, _) => Left("Invalid action.")
+      }
+      case _ => Left("Not waiting for promotion.")
+    }
   }
   def move(cg: ChessGame, m: Move): Either[String, ChessGame] =  {
     cg.status match {
@@ -93,7 +107,7 @@ object ChessGame {
       case DrawRequest => Left("""Draw request pending. Type "nodraw" or "draw".""")
       case Stalemate(p) => Left(s"Stalemate! $p can no longer move.}")
       case Checkmate(p) => Left(s"${p} wins.}")
-      case PromotionPending(p) => Left(s"Promotion pending for ${p}.}")
+      case PromotionPending(p, _) => Left(s"""Promotion pending for ${p}. Type "queen", "rook", "bishop" or "knight".""")
     }
   }
   def switchPlayer(p: Player): Player = {
@@ -103,13 +117,16 @@ object ChessGame {
     }
   }
   def _move(cg: ChessGame, p: Piece, m: Move): ChessGame = {
-    p match {
-      case WhitePawn if m.dest.y == 7 => cg.board(m.dest.x)(m.dest.y) = Some(WhiteQueen)
-      case BlackPawn if m.dest.y == 0 => cg.board(m.dest.x)(m.dest.y) = Some(BlackQueen)
-      case _ => cg.board(m.dest.x)(m.dest.y) = cg.board(m.src.x)(m.src.y)
-    }
+    cg.board(m.dest.x)(m.dest.y) = cg.board(m.src.x)(m.src.y)
     cg.board(m.src.x)(m.src.y) = None
-    ChessGame(cg.board, ChessGame.switchPlayer(cg.currentPlayer), Undecided)
+    val (player, status) = {
+      p match {
+        case WhitePawn if m.dest.y == 7 => (cg.currentPlayer, PromotionPending(White, m.dest))
+        case BlackPawn if m.dest.y == 0 => (cg.currentPlayer, PromotionPending(Black, m.dest))
+        case _ => (cg.currentPlayer.opponent, Undecided)
+      }
+    }
+    ChessGame(cg.board, player, status)
   }
   def validMove(cg: ChessGame, p: Piece, m: Move): Boolean =  {
     if(m.src == m.dest) {
@@ -128,7 +145,6 @@ object ChessGame {
         case BlackBishop => true
         case BlackKnight => true
       }
-
     }
   }
   def validWhitePawnMove(cg: ChessGame, p: Piece, m: Move): Boolean =  {
@@ -216,11 +232,10 @@ object ChessGame {
   def convert(s: String): Array[Array[Option[Piece]]] = {
     val p = List('♖', '♘', '♗', '♕', '♔', '♙', '♜', '♞',  '♝',  '♛',  '♚',  '♟',  '.')
     val l = {
-      val tmp = s.filter(p.contains(_)).toCharArray.map(convertChar(_))
-      if(tmp.length != 64) 
-        "♜♞♝♛♚♝♞♜♟♟♟♟♟♟♟♟................................♙♙♙♙♙♙♙♙♖♘♗♕♔♗♘♖".toCharArray.map(convertChar(_))
-      else
-        tmp
+      val r = s.filter(p.contains(_)).toCharArray.map(convertChar(_))
+      if(r.length != 64) 
+        throw new IllegalArgumentException("the board should have 64 valid chess characters")
+      r
     }
     val len = 8
     val arr = Array.ofDim[Option[Piece]](len, len)
@@ -233,6 +248,9 @@ object ChessGame {
   }
 }
 case class ChessGame(val board: Array[Array[Option[Piece]]], val currentPlayer: Player, val status: Status) {
+  def this(board: String, currentPlayer: Player, status: Status) {
+    this(ChessGame.convert(board), currentPlayer, status)
+  }
   def this(board: String, currentPlayer: Player) {
     this(ChessGame.convert(board), currentPlayer, Undecided)
   }
@@ -263,7 +281,7 @@ case class ChessGame(val board: Array[Array[Option[Piece]]], val currentPlayer: 
             }
           }
         }
-        return this.currentPlayer == that.currentPlayer
+        return this.currentPlayer == that.currentPlayer && this.status == that.status
       case _ => return false
     }
 }
@@ -281,7 +299,7 @@ case class Move(val src: Position, val dest: Position)
 sealed abstract class Status
 case class Checkmate(player: Player) extends Status
 case class Stalemate(player: Player) extends Status
-case class PromotionPending(player: Player) extends Status
+case class PromotionPending(player: Player, dest: Position) extends Status
 case object DrawRequest extends Status
 case object Undecided extends Status
 
@@ -304,14 +322,35 @@ object Chess {
             case Right(x) =>
               cg = x
               cg.status match {
-                case Stalemate(p) => println(s"Stalemate! $p can no longer move.}"); running = false
-                case Checkmate(p) => println(s"${p} wins.}"); running = false
-                case PromotionPending(p) => 
+                case Stalemate(p) => println(s"Stalemate! $p can no longer move."); running = false
+                case Checkmate(p) => println(s"${p} wins."); running = false
+                case PromotionPending(p, d) => println(s"""Promote pending for ${p}. Type "queen", "rook", "bishop" or "knight".""")
                 case _ => 
               }
             case Left(x) => println("Error: " + x)
           }
         }
+        case "queen" | "rook" | "bishop" | "knight" =>
+          val promotion = (line, cg.currentPlayer) match {
+            case ("queen", White) => WhiteRook
+            case ("rook", White) => WhiteRook
+            case ("bishop", White) => WhiteRook
+            case ("knight", White) => WhiteRook
+            case ("queen", Black) => BlackQueen
+            case ("rook", Black) => BlackRook
+            case ("bishop", Black) => BlackBishop
+            case ("knight", Black) => BlackKnight
+            case (_, White) => WhiteQueen
+            case (_, Black) => BlackQueen
+          }
+          cg.status match {
+            case PromotionPending(p, dest) =>
+              ChessGame.promote(cg, promotion) match {
+                case Right(x) => cg = x
+                case Left(x) => println("Error: " + x)
+              }
+            case _ => println("No promotion pending.")
+          }
         case "draw" | "d" =>
           cg.status match {
             case Undecided => cg = ChessGame(cg.board, cg.currentPlayer.opponent, DrawRequest)
@@ -331,6 +370,7 @@ object Chess {
         case "help" | "h" =>
           println("'d' or 'draw' to ask draw to opponent.")
           println("'r' or 'restart' to restart the game.")
+          println(""""queen", "rook", "bishop", "knight", to promote.""")
           println("'e' or 'exit' to quit.")
           println("'h' or 'help' for help.")
         case _ => println("Invalid move syntax.")
