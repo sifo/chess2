@@ -73,7 +73,7 @@ object ChessGame {
   }
   def promote(cg: ChessGame, p: Piece): Either[String, ChessGame] = {
     cg.status match {
-      case PromotionPending(_, dest) =>
+      case PromotionPending(dest) =>
       (p, cg.currentPlayer, cg.board(dest.x)(dest.y)) match {
         case (BlackRook | BlackQueen | BlackBishop | BlackKnight, Black, Some(BlackPawn))
            | (WhiteRook | WhiteQueen | WhiteBishop | WhiteKnight, White, Some(WhitePawn)) =>
@@ -107,7 +107,8 @@ object ChessGame {
       case DrawRequest => Left("""Draw request pending. Type "nodraw" or "draw".""")
       case Stalemate(p) => Left(s"Stalemate! $p can no longer move.}")
       case Checkmate(p) => Left(s"${p} wins.}")
-      case PromotionPending(p, _) => Left(s"""Promotion pending for ${p}. Type "queen", "rook", "bishop" or "knight".""")
+      case PromotionPending(_) =>
+        Left(s"""Promotion pending for ${cg.currentPlayer}. Type "queen", "rook", "bishop" or "knight".""")
     }
   }
   def switchPlayer(p: Player): Player = {
@@ -121,8 +122,8 @@ object ChessGame {
     cg.board(m.src.x)(m.src.y) = None
     val (player, status) = {
       p match {
-        case WhitePawn if m.dest.y == 7 => (cg.currentPlayer, PromotionPending(White, m.dest))
-        case BlackPawn if m.dest.y == 0 => (cg.currentPlayer, PromotionPending(Black, m.dest))
+        case WhitePawn if m.dest.y == 7 => (cg.currentPlayer, PromotionPending(m.dest))
+        case BlackPawn if m.dest.y == 0 => (cg.currentPlayer, PromotionPending(m.dest))
         case _ => (cg.currentPlayer.opponent, Undecided)
       }
     }
@@ -299,7 +300,7 @@ case class Move(val src: Position, val dest: Position)
 sealed abstract class Status
 case class Checkmate(player: Player) extends Status
 case class Stalemate(player: Player) extends Status
-case class PromotionPending(player: Player, dest: Position) extends Status
+case class PromotionPending(dest: Position) extends Status
 case object DrawRequest extends Status
 case object Undecided extends Status
 
@@ -324,7 +325,8 @@ object Chess {
               cg.status match {
                 case Stalemate(p) => println(s"Stalemate! $p can no longer move."); running = false
                 case Checkmate(p) => println(s"${p} wins."); running = false
-                case PromotionPending(p, d) => println(s"""Promote pending for ${p}. Type "queen", "rook", "bishop" or "knight".""")
+                case PromotionPending(d) =>
+                  println(s"""Promote pending for ${cg.currentPlayer}. Type "queen", "rook", "bishop" or "knight".""")
                 case _ => 
               }
             case Left(x) => println("Error: " + x)
@@ -344,7 +346,7 @@ object Chess {
             case (_, Black) => BlackQueen
           }
           cg.status match {
-            case PromotionPending(p, dest) =>
+            case PromotionPending(dest) =>
               ChessGame.promote(cg, promotion) match {
                 case Right(x) => cg = x
                 case Left(x) => println("Error: " + x)
