@@ -22,9 +22,7 @@ class ChessSpec extends FunSpec with Matchers  {
       """
 
       it("throws exception"){
-        a [IllegalArgumentException] should be thrownBy {
-          ChessGame(b, White)
-        }
+        a [IllegalArgumentException] should be thrownBy { ChessGame(b, White) }
       }
     }
 
@@ -44,9 +42,7 @@ class ChessSpec extends FunSpec with Matchers  {
       """
 
       it("throws exception"){
-        a [IllegalArgumentException] should be thrownBy {
-            ChessGame(b, White)
-        }
+        a [IllegalArgumentException] should be thrownBy { ChessGame(b, White) }
       }
     }
   }
@@ -142,19 +138,16 @@ class ChessSpec extends FunSpec with Matchers  {
           """
         val c = ChessGame(b, White, Undecided)
         val m = Move(Position('a', 7), Position('a', 8))
-        ChessGame.move(c, m) match {
-          case Right(x) => x
-          case Left(x) => ChessGame()
-        }
+        ChessGame.move(c, m) match { case Right(x) => x; case Left(x) => ChessGame() }
       }
 
-      describe("when the pawn is promoted to queen") {
+      describe("when promoted to valid pieces") {
 
-        val result = ChessGame.promote(chessGame, WhiteQueen)
+        val p = List((WhiteQueen, '♕'), (WhiteRook, '♖'), (WhiteBishop, '♗'), (WhiteKnight, '♘'))
 
-        val expected = {
-          val b = """
-            8   ♕ . . . . . . .
+        def expected(c: Char) = {
+          val b = s"""
+            8  $c . . . . . . .
             7   . . . . . ♚ . .
             6   . . . . . . . .
             5   . . . . . . . .
@@ -168,83 +161,17 @@ class ChessSpec extends FunSpec with Matchers  {
           ChessGame(b, Black, Undecided)
         }
 
-        it("puts the queen on the board"){
-          result should be (Right(expected))
+        it("puts the piece on the board") {
+          p.foreach { t => ChessGame.promote(chessGame, t._1) should be (Right(expected(t._2))) }
         }
       }
 
-      describe("when the pawn is promoted to rook") {
+      describe("when promoted to invalid pieces") {
 
-        val result = ChessGame.promote(chessGame, WhiteRook)
+        val p = List(WhitePawn, WhiteKing, BlackPawn, BlackRook, BlackQueen, BlackKing, BlackBishop, BlackKnight)
 
-        val expected = {
-          val b = """
-            8   ♖ . . . . . . .
-            7   . . . . . ♚ . .
-            6   . . . . . . . .
-            5   . . . . . . . .
-            4   . . . . . . . .
-            3   . . . . . . . .
-            2   . . . . . . . .
-            1   . . . . ♔ . . .
-
-                a b c d e f g h
-          """
-          ChessGame(b, Black, Undecided)
-        }
-
-        it("puts the rook on the board"){
-          result should be (Right(expected))
-        }
-      }
-
-      describe("when the pawn is promoted to bishop") {
-
-        val result = ChessGame.promote(chessGame, WhiteBishop)
-
-        val expected = {
-          val b = """
-            8   ♗ . . . . . . .
-            7   . . . . . ♚ . .
-            6   . . . . . . . .
-            5   . . . . . . . .
-            4   . . . . . . . .
-            3   . . . . . . . .
-            2   . . . . . . . .
-            1   . . . . ♔ . . .
-
-                a b c d e f g h
-          """
-          ChessGame(b, Black, Undecided)
-        }
-
-        it("puts the bishop on the board"){
-          result should be (Right(expected))
-        }
-      }
-
-      describe("when the pawn is promoted to Knight") {
-
-        val result = ChessGame.promote(chessGame, WhiteKnight)
-
-        val expected = {
-          val b = """
-            8   ♘ . . . . . . .
-            7   . . . . . ♚ . .
-            6   . . . . . . . .
-            5   . . . . . . . .
-            4   . . . . . . . .
-            3   . . . . . . . .
-            2   . . . . . . . .
-            1   . . . . ♔ . . .
-
-                a b c d e f g h
-          """
-          ChessGame(b, Black, Undecided)
-        }
-
-        it("puts the knight on the board"){
-          result should be (Right(expected))
+        it("fails to put the pieces on the board"){
+          p.foreach(ChessGame.promote(chessGame, _) should be ('left))
         }
       }
     }
@@ -266,18 +193,15 @@ class ChessSpec extends FunSpec with Matchers  {
           """
         val c = ChessGame(b, Black, Undecided)
         val m = Move(Position('a', 2), Position('a', 1))
-        ChessGame.move(c, m) match {
-          case Right(x) => x
-          case Left(x) => ChessGame()
-        }
+        ChessGame.move(c, m) match { case Right(x) => x; case Left(x) => ChessGame() }
       }
 
-      describe("when the pawn is promoted to queen") {
+      describe("when promoted to valid pieces") {
 
-        val result = ChessGame.promote(chessGame, BlackQueen)
+        val p = List((BlackQueen, '♛'), (BlackRook, '♜'), (BlackBishop, '♝'), (BlackKnight, '♞'))
 
-        val expected = {
-          val b = """
+        def expected(c: Char) = {
+          val b = s"""
             8   . . . . . . . .
             7   . . . . . ♚ . .
             6   . . . . . . . .
@@ -285,90 +209,24 @@ class ChessSpec extends FunSpec with Matchers  {
             4   . . . . . . . .
             3   . . . . . . . .
             2   . . . . . . . .
-            1   ♛ . . . ♔ . . .
+            1  $c . . . ♔ . . .
 
-                a b c d e f g h
+                a  b c d e f g h
           """
           ChessGame(b, White, Undecided)
         }
 
-        it("puts the queen on the board"){
-          result should be (Right(expected))
+        it("puts the piece on the board") {
+          p.foreach { t => ChessGame.promote(chessGame, t._1) should be (Right(expected(t._2))) }
         }
       }
 
-      describe("when the pawn is promoted to rook") {
+      describe("when promoted to invalid pieces") {
 
-        val result = ChessGame.promote(chessGame, BlackRook)
+        val p = List(BlackPawn, BlackKing, WhitePawn, WhiteRook, WhiteQueen, WhiteKing, WhiteBishop, WhiteKnight)
 
-        val expected = {
-          val b = """
-            8   . . . . . . . .
-            7   . . . . . ♚ . .
-            6   . . . . . . . .
-            5   . . . . . . . .
-            4   . . . . . . . .
-            3   . . . . . . . .
-            2   . . . . . . . .
-            1   ♜ . . . ♔ . . .
-
-                a b c d e f g h
-          """
-          ChessGame(b, White, Undecided)
-        }
-
-        it("puts the rook on the board"){
-          result should be (Right(expected))
-        }
-      }
-
-      describe("when the pawn is promoted to bishop") {
-
-        val result = ChessGame.promote(chessGame, BlackBishop)
-
-        val expected = {
-          val b = """
-            8   . . . . . . . .
-            7   . . . . . ♚ . .
-            6   . . . . . . . .
-            5   . . . . . . . .
-            4   . . . . . . . .
-            3   . . . . . . . .
-            2   . . . . . . . .
-            1   ♝ . . . ♔ . . .
-
-                a b c d e f g h
-          """
-          ChessGame(b, White, Undecided)
-        }
-
-        it("puts the bishop on the board"){
-          result should be (Right(expected))
-        }
-      }
-
-      describe("when the pawn is promoted to knight") {
-
-        val result = ChessGame.promote(chessGame, BlackKnight)
-
-        val expected = {
-          val b = """
-            8   . . . . . . . .
-            7   . . . . . ♚ . .
-            6   . . . . . . . .
-            5   . . . . . . . .
-            4   . . . . . . . .
-            3   . . . . . . . .
-            2   . . . . . . . .
-            1   ♞ . . . ♔ . . .
-
-                a b c d e f g h
-          """
-          ChessGame(b, White, Undecided)
-        }
-
-        it("puts the knight on the board"){
-          result should be (Right(expected))
+        it("fails to put the pieces on the board"){
+          p.foreach(ChessGame.promote(chessGame, _) should be ('left))
         }
       }
     }
@@ -418,8 +276,9 @@ class ChessSpec extends FunSpec with Matchers  {
 
     describe("when move 2 squares ahead"){
 
-      val result = {
-        val b = """
+      describe("when first move"){
+        val result = {
+          val b = """
             8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
             7   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
             6   . . . . . . . .
@@ -431,12 +290,12 @@ class ChessSpec extends FunSpec with Matchers  {
 
                 a b c d e f g h
           """
-        val m = Move(Position('d', 2), Position('d', 4))
-        ChessGame.move(ChessGame(b, White), m)
-      }
+          val m = Move(Position('d', 2), Position('d', 4))
+          ChessGame.move(ChessGame(b, White), m)
+        }
 
-      val expected = {
-        val b = """
+        val expected = {
+          val b = """
             8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
             7   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
             6   . . . . . . . .
@@ -448,35 +307,192 @@ class ChessSpec extends FunSpec with Matchers  {
 
                 a b c d e f g h
           """
-        ChessGame(b, Black)
+          ChessGame(b, Black)
+        }
+
+        it("puts the pawn 2 square ahead"){
+          result should be (Right(expected))
+        }
       }
 
-      it("puts the pawn 2 square ahead"){
-        result should be (Right(expected))
-      }
-    }
+      describe("when not first move") {
 
-    describe("when move 3 squares ahead") {
-
-      val result = {
-        val b = """
+        val result = {
+          val b = """
             8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
-            7   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+            7   ♟ ♟ ♟ ♟ ♟ . ♟ ♟
             6   . . . . . . . .
-            5   . . . . . . . .
-            4   . . . . . . . .
+            5   . . . . . ♟ . .
+            4   . . . ♙ . . . .
             3   . . . . . . . .
-            2   ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+            2   ♙ ♙ ♙ . ♙ ♙ ♙ ♙
             1   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
 
                 a b c d e f g h
           """
-        val m = Move(Position('d', 2), Position('d', 5))
+          val m = Move(Position('d', 4), Position('d', 6))
+          ChessGame.move(ChessGame(b, White), m)
+        }
+
+        it("fails to move"){
+          result should be ('left)
+        }
+      }
+    }
+
+    describe("when it attacks") {
+
+      val result = {
+        val b = """
+            8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+            7   ♟ ♟ ♟ ♟ . . ♟ ♟
+            6   . . . . . ♟ . .
+            5   . . . . ♟ . . .
+            4   . . . ♙ . . . .
+            3   . . . . . ♘ . .
+            2   ♙ ♙ ♙ . ♙ ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ . ♖
+
+                a b c d e f g h
+          """
+        val m = Move(Position('d', 4), Position('e', 5))
         ChessGame.move(ChessGame(b, White), m)
       }
 
-      it("fails to move the pawn"){
-        result should be ('left)
+      val expected = {
+        val b = """
+            8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+            7   ♟ ♟ ♟ ♟ . . ♟ ♟
+            6   . . . . . ♟ . .
+            5   . . . . ♙ . . .
+            4   . . . . . . . .
+            3   . . . . . ♘ . .
+            2   ♙ ♙ ♙ . ♙ ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ . ♖
+
+                a b c d e f g h
+          """
+        ChessGame(b, Black)
+      }
+
+      it("takes the pawn"){
+        result should be (Right(expected))
+      }
+    }
+
+    describe("when en passant left") {
+
+      val result = {
+        val b = """
+            8   ♜ ♞ ♝ ♛ ♚ ♝ . ♜
+            7   ♟ . ♟ ♟ ♞ . ♟ ♟
+            6   . . . . . ♟ . .
+            5   . ♟ ♙ . ♟ . . .
+            4   . . . . . . . .
+            3   . . . . . ♘ . .
+            2   ♙ ♙ . ♙ ♙ ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ . ♖
+
+                a b c d e f g h
+          """
+        val m = Move(Position('c', 5), Position('b', 6))
+        println(s"${Position('b', 6)}")
+        val h = List(Move(Position('b', 7), Position('b', 5)))
+        ChessGame.move(ChessGame(b, White, Undecided, h), m)
+      }
+
+      val expected = {
+        val b = """
+            8   ♜ ♞ ♝ ♛ ♚ ♝ . ♜
+            7   ♟ . ♟ ♟ ♞ . ♟ ♟
+            6   . ♙ . . . ♟ . .
+            5   . . . . ♟ . . .
+            4   . . . . . . . .
+            3   . . . . . ♘ . .
+            2   ♙ ♙ . ♙ ♙ ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ . ♖
+
+                a b c d e f g h
+          """
+          val h = List(Move(Position('b', 7), Position('b', 5)), Move(Position('c', 5), Position('b', 6)))
+        ChessGame(b, Black, Undecided, h)
+      }
+
+      it("takes the pawn"){
+        result should be (Right(expected))
+      }
+    }
+
+    describe("when en passant right") {
+
+      val result = {
+        val b = """
+            8   ♜ ♞ ♝ ♛ ♚ ♝ . ♜
+            7   ♟ ♟ ♟ . ♞ . ♟ ♟
+            6   . . . . . ♟ . .
+            5   . . ♙ ♟ ♟ . . .
+            4   . . . . . . . .
+            3   . . . . . ♘ . .
+            2   ♙ ♙ . ♙ ♙ ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ . ♖
+
+                a b c d e f g h
+          """
+        val m = Move(Position('c', 5), Position('d', 6))
+        val h = List(Move(Position('d', 7), Position('d', 5)))
+        ChessGame.move(ChessGame(b, White, Undecided, h), m)
+      }
+
+      val expected = {
+        val b = """
+            8   ♜ ♞ ♝ ♛ ♚ ♝ . ♜
+            7   ♟ ♟ ♟ . ♞ . ♟ ♟
+            6   . . . ♙ . ♟ . .
+            5   . . . . ♟ . . .
+            4   . . . . . . . .
+            3   . . . . . ♘ . .
+            2   ♙ ♙ . ♙ ♙ ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ . ♖
+
+                a b c d e f g h
+          """
+          val h = List(Move(Position('d', 7), Position('d', 5)), Move(Position('c', 5), Position('d', 6)))
+        ChessGame(b, Black, Undecided, h)
+      }
+
+      it("takes the pawn"){
+        result should be (Right(expected))
+      }
+    }
+
+    describe("when invalid move") {
+
+      val m = List(
+        Move(Position('d', 4), Position('d', 6)),
+        Move(Position('d', 4), Position('e', 5)),
+        Move(Position('d', 4), Position('c', 5)),
+        Move(Position('d', 4), Position('d', 3)),
+        Move(Position('d', 4), Position('e', 3))
+      )
+
+      val cg = {
+        val b = """
+            8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+            7   ♟ ♟ ♟ ♟ ♟ ♟ . ♟
+            6   . . . . . . . .
+            5   . . . . . . ♟ .
+            4   . . . ♙ . . . .
+            3   . . . . . . . .
+            2   ♙ ♙ ♙ . ♙ ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+
+                a b c d e f g h
+          """
+        ChessGame(b, White)
+      }
+
+      it("fails to move"){
+        m.foreach(ChessGame.move(cg, _) should be ('left))
       }
     }
   }

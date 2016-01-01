@@ -54,6 +54,7 @@ case object Black extends Player {
 
 object ChessGame {
 
+  def apply(b: String, p: Player, s: Status, h: List[Move]) = new ChessGame(b, p, s, h)
   def apply(b: String, p: Player, s: Status) = new ChessGame(b, p, s)
   def apply(b: String, p: Player) = new ChessGame(b, p)
   def apply(b: String) = new ChessGame(b)
@@ -78,7 +79,7 @@ object ChessGame {
         case (BlackRook | BlackQueen | BlackBishop | BlackKnight, Black, Some(BlackPawn))
            | (WhiteRook | WhiteQueen | WhiteBishop | WhiteKnight, White, Some(WhitePawn)) =>
           cg.board(dest.x)(dest.y) = Some(p)
-          Right(ChessGame(cg.board, cg.currentPlayer.opponent, Undecided))
+          Right(ChessGame(cg.board, cg.currentPlayer.opponent, Undecided, cg.history))
         case (_, _, _) => Left("Invalid action.")
       }
       case _ => Left("Not waiting for promotion.")
@@ -94,11 +95,7 @@ object ChessGame {
           case Some(p) => {
             (cg.currentPlayer, Player.getPlayer(p)) match {
               case (White, White) | (Black, Black) => {
-                if(ChessGame.validMove(cg, p, m)) {
-                  Right(ChessGame._move(cg, p, m))
-                } else {
-                  Left("Invalid move.")
-                }
+                ChessGame.validMove(cg, p, m)
               }
               case (White, Black) | (Black, White) => Left(s"${cg.currentPlayer} turn.")
             }
@@ -127,90 +124,110 @@ object ChessGame {
         case _ => (cg.currentPlayer.opponent, Undecided)
       }
     }
-    ChessGame(cg.board, player, status)
+    ChessGame(cg.board, player, status, cg.history :+ m)
   }
-  def validMove(cg: ChessGame, p: Piece, m: Move): Boolean =  {
+  def validMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
     if(m.src == m.dest) {
-      false
+      Left("Invalid move.")
     } else {
       p match {
         case WhitePawn => validWhitePawnMove(cg, p, m)
-        case WhiteRook => true
+        case WhiteRook => Left("Invalid move.")
         case WhiteQueen | BlackQueen => validQueenMove(cg, p, m)
-        case WhiteKing => true
-        case WhiteBishop => true
-        case WhiteKnight => true
+        case WhiteKing => Left("Invalid move.")
+        case WhiteBishop => Left("Invalid move.")
+        case WhiteKnight => Left("Invalid move.")
         case BlackPawn => validBlackPawnMove(cg, p, m)
-        case BlackRook => true
-        case BlackKing => true
-        case BlackBishop => true
-        case BlackKnight => true
+        case BlackRook => Left("Invalid move.")
+        case BlackKing => Left("Invalid move.")
+        case BlackBishop => Left("Invalid move.")
+        case BlackKnight => Left("Invalid move.")
       }
     }
   }
-  def validWhitePawnMove(cg: ChessGame, p: Piece, m: Move): Boolean =  {
+  def validWhitePawnMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
     if (m.src.y == 1 && m.dest.y == 3 && m.src.x == m.dest.x) {
       (cg.board(m.dest.x)(m.dest.y), cg.board(m.dest.x)(m.dest.y-1)) match {
-        case (None, None) => true
-        case (_, _) => false
+        case (None, None) => Right(ChessGame._move(cg, p, m))
+        case (_, _) => Left("Invalid move")
       }
     } else if (m.dest.y - m.src.y == 1 && m.src.x == m.dest.x) {
       cg.board(m.dest.x)(m.dest.y) match {
-        case None => true
-        case _ => false
+        case None => Right(ChessGame._move(cg, p, m))
+        case _ => Left("Invalid move")
       }
-    } else if (m.dest.x - m.src.y == 1 && (m.src.x - m.dest.x).abs == 1) {
+    } else if (m.dest.y - m.src.y == 1 && (m.src.x - m.dest.x).abs == 1) {
       cg.board(m.dest.x)(m.dest.y) match {
         case Some(p2) => {
           (Player.getPlayer(p), Player.getPlayer(p2)) match {
-            case (White, White) => false
-            case _ => true
+            case (White, White) => Left("Invalid move")
+            case _ => Right(ChessGame._move(cg, p, m))
           }
         }
-        case None => false
+        case None => {
+          cg.board(m.dest.x)(m.dest.y-1) match {
+            // check en passant
+            case Some(p2) => {
+              p2 match {
+                case BlackPawn =>
+                  if(cg.history.length > 0 && cg.history.last.dest == Position(m.dest.x, m.dest.y-1)
+                       && cg.history.last.src == Position(m.dest.x, m.dest.y+1)) {
+                    cg.board(m.dest.x)(m.dest.y-1) = None
+                    Right(ChessGame._move(cg, p, m))
+                  } else {
+                    Left("Invalid move")
+                  }
+                case _ =>
+                  Left("Invalid move")
+              }
+            }
+            case _ => 
+              Left("Invalid move")
+          }
+        }
       }
     } else {
-      false
+      Left("Invalid move")
     }
   }
-  def validQueenMove(cg: ChessGame, p: Piece, m: Move): Boolean =  {
+  def validQueenMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
     if ((m.dest.y - m.src.y).abs <= 1 && (m.src.x - m.dest.x).abs <= 1) {
       cg.board(m.dest.x)(m.dest.y) match {
         case Some(p2) => {
           (Player.getPlayer(p), Player.getPlayer(p2)) match {
-            case (White, White) | (Black, Black) => false
-            case _ => true
+            case (White, White) | (Black, Black) => Left("Invalid move.")
+            case _ => Left("Invalid move.")
           }
         }
-        case None => true
+        case None => Left("Invalid move.")
       }
     } else {
-      false
+      Left("Invalid move")
     }
   }
-  def validBlackPawnMove(cg: ChessGame, p: Piece, m: Move): Boolean =  {
+  def validBlackPawnMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
     if (m.src.y == 6 && m.dest.y == 4 && m.src.x == m.src.x) {
       (cg.board(m.dest.x)(m.dest.y), cg.board(m.dest.x)(m.dest.y+1)) match {
-        case (None, None) => true
-        case (_, _) => false
+        case (None, None) => Left("Invalid move")
+        case (_, _) => Left("Invalid move.")
       }
     } else if (m.src.y - m.dest.y == 1 && m.src.x == m.dest.x) {
       cg.board(m.dest.x)(m.dest.y) match {
-        case None => true
-        case _ => false
+        case None => Left("Invalid move")
+        case _ => Left("Invalid move")
       }
     } else if (m.src.y - m.dest.y == 1 && (m.src.x - m.dest.x).abs == 1) {
       cg.board(m.dest.x)(m.dest.y) match {
         case Some(p2) => {
           (Player.getPlayer(p), Player.getPlayer(p2)) match {
-            case (Black, Black) => false
-            case _ => true
+            case (Black, Black) => Left("Invalid move")
+            case _ => Left("Invalid move")
           }
         }
-        case None => false
+        case None => Left("Invalid move")
       }
     } else {
-      false
+      Left("Invalid move")
     }
   }
   def convertChar(s: Char): Option[Piece] = {
@@ -248,12 +265,17 @@ object ChessGame {
     arr
   }
 }
-case class ChessGame(val board: Array[Array[Option[Piece]]], val currentPlayer: Player, val status: Status) {
+case class ChessGame(val board: Array[Array[Option[Piece]]], val currentPlayer: Player, val status: Status, val history: List[Move]) {
+
+  def this(board: String, currentPlayer: Player, status: Status, h: List[Move]) {
+    this(ChessGame.convert(board), currentPlayer, status, h)
+  }
+
   def this(board: String, currentPlayer: Player, status: Status) {
-    this(ChessGame.convert(board), currentPlayer, status)
+    this(ChessGame.convert(board), currentPlayer, status, List[Move]())
   }
   def this(board: String, currentPlayer: Player) {
-    this(ChessGame.convert(board), currentPlayer, Undecided)
+    this(ChessGame.convert(board), currentPlayer, Undecided, List[Move]())
   }
   def this() {
     this("""
@@ -355,7 +377,7 @@ object Chess {
           }
         case "draw" | "d" =>
           cg.status match {
-            case Undecided => cg = ChessGame(cg.board, cg.currentPlayer.opponent, DrawRequest)
+            case Undecided => cg = ChessGame(cg.board, cg.currentPlayer.opponent, DrawRequest, cg.history)
             case DrawRequest => println("It's draw!"); running = false
             case _ =>
           }
@@ -363,7 +385,7 @@ object Chess {
           cg.status match {
             case Undecided => println("There is no draw request pending.")
             case DrawRequest =>
-              cg = ChessGame(cg.board, cg.currentPlayer.opponent, Undecided)
+              cg = ChessGame(cg.board, cg.currentPlayer.opponent, Undecided, cg.history)
               println("Draw request denied!")
             case _ =>
           }
