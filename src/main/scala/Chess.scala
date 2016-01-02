@@ -236,31 +236,6 @@ object ChessGame {
     }
   }
 
-  def validBlackPawnMove2(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
-    if (m.src.y == 6 && m.dest.y == 4 && m.src.x == m.src.x) {
-      (cg.board(m.dest.x)(m.dest.y), cg.board(m.dest.x)(m.dest.y+1)) match {
-        case (None, None) => Left("Invalid move")
-        case (_, _) => Left("Invalid move.")
-      }
-    } else if (m.src.y - m.dest.y == 1 && m.src.x == m.dest.x) {
-      cg.board(m.dest.x)(m.dest.y) match {
-        case None => Left("Invalid move")
-        case _ => Left("Invalid move")
-      }
-    } else if (m.src.y - m.dest.y == 1 && (m.src.x - m.dest.x).abs == 1) {
-      cg.board(m.dest.x)(m.dest.y) match {
-        case Some(p2) => {
-          (Player.getPlayer(p), Player.getPlayer(p2)) match {
-            case (Black, Black) => Left("Invalid move")
-            case _ => Left("Invalid move")
-          }
-        }
-        case None => Left("Invalid move")
-      }
-    } else {
-      Left("Invalid move")
-    }
-  }
   def validQueenMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
     if ((m.dest.y - m.src.y).abs <= 1 && (m.src.x - m.dest.x).abs <= 1) {
       cg.board(m.dest.x)(m.dest.y) match {
