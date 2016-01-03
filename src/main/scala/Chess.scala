@@ -136,12 +136,12 @@ object ChessGame {
         case WhiteQueen | BlackQueen => validQueenMove(cg, p, m)
         case WhiteKing => Left("Invalid move.")
         case WhiteBishop => validBishopMove(cg, p, m)
-        case WhiteKnight => validWhiteKnightMove(cg, p, m)
+        case WhiteKnight => validKnightMove(cg, p, m)
         case BlackPawn => validBlackPawnMove(cg, p, m)
         case BlackRook => Left("Invalid move.")
         case BlackKing => Left("Invalid move.")
         case BlackBishop => validBishopMove(cg, p, m)
-        case BlackKnight => validBlackKnightMove(cg, p, m)
+        case BlackKnight => validKnightMove(cg, p, m)
       }
     }
   }
@@ -167,14 +167,14 @@ object ChessGame {
     } else Left("Invalid move.")
   }
 
-  def validWhiteKnightMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
+  def validKnightMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
     val b = (m.src.x - m.dest.x).abs == 1 && (m.src.y - m.dest.y).abs == 2
     val c = (m.src.x - m.dest.x).abs == 2 && (m.src.y - m.dest.y).abs == 1
     if (b || c) {
       cg.board(m.dest.x)(m.dest.y) match {
         case Some(p2) =>
           (Player.getPlayer(p), Player.getPlayer(p2)) match {
-            case (White, White) => Left("Invalid move")
+            case (c1, c2) if(c1 == c2) => Left("Invalid move")
             case _ => Right(ChessGame._move(cg, p, m))
           }
         case None => Right(ChessGame._move(cg, p, m))
