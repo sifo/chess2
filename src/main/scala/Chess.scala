@@ -146,6 +146,60 @@ object ChessGame {
     }
   }
 
+  def validQueenMove2(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] = {
+    (validRookMove(cg, p, m), validBishopMove(cg, p, m)) match {
+      case (Left, Right(x)) => Right(x)
+      case (Right(x), Left) => Right(x)
+      case _ => Left("Invalid move.") 
+    }
+  }
+
+  def validQueenMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] = {
+    def sign(i: Int, j: Int): Int = if(i - j > 0) 1 else -1
+
+    if (m.src.x == m.dest.x ||  m.src.y == m.dest.y) {
+      if (m.src.x != m.dest.x) {
+        for(i <- 1 to (m.src.x - m.dest.x).abs - 1) {
+          cg.board(m.src.x + i * (sign(m.dest.x, m.src.x)))(m.dest.y) match {
+            case Some(_) => return Left("Invalid move.")
+            case _ =>
+          }
+        }
+      }
+      else if (m.src.y != m.dest.y) {
+        for(i <- 1 to (m.src.y - m.dest.y).abs - 1) {
+          cg.board(m.dest.x)(m.src.y + i * (sign(m.dest.y, m.src.y))) match {
+            case Some(_) => return Left("Invalid move.")
+            case _ =>
+          }
+        }
+      }
+      cg.board(m.dest.x)(m.dest.y) match {
+        case Some(p2) =>
+          (Player.getPlayer(p), Player.getPlayer(p2)) match {
+            case (c1, c2) if(c1 == c2) => Left("Invalid move")
+            case _ => Right(ChessGame._move(cg, p, m))
+          }
+        case None => Right(ChessGame._move(cg, p, m))
+      }
+    } else if ((m.src.x - m.dest.x).abs == (m.src.y - m.dest.y).abs) {
+      for(i <- 1 to (m.src.x - m.dest.x).abs - 1) {
+        cg.board(m.src.x + i * (sign(m.dest.x, m.src.x)))(m.src.y + i * (sign(m.dest.y, m.src.y))) match {
+          case Some(_) => return Left("Invalid move.")
+          case _ =>
+        }
+      }
+      cg.board(m.dest.x)(m.dest.y) match {
+        case Some(p2) =>
+          (Player.getPlayer(p), Player.getPlayer(p2)) match {
+            case (c1, c2) if(c1 == c2) => Left("Invalid move")
+            case _ => Right(ChessGame._move(cg, p, m))
+          }
+        case None => Right(ChessGame._move(cg, p, m))
+      }
+    } else Left("Invalid move.")
+  }
+
   def validRookMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] = {
     def sign(i: Int, j: Int): Int = if(i - j > 0) 1 else -1
 
@@ -319,7 +373,7 @@ object ChessGame {
     }
   }
 
-  def validQueenMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
+  def validKingMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
     if ((m.dest.y - m.src.y).abs <= 1 && (m.src.x - m.dest.x).abs <= 1) {
       cg.board(m.dest.x)(m.dest.y) match {
         case Some(p2) => {
