@@ -136,15 +136,46 @@ object ChessGame {
         case WhiteQueen | BlackQueen => validQueenMove(cg, p, m)
         case WhiteKing => Left("Invalid move.")
         case WhiteBishop => Left("Invalid move.")
-        case WhiteKnight => Left("Invalid move.")
+        case WhiteKnight => validWhiteKnightMove(cg, p, m)
         case BlackPawn => validBlackPawnMove(cg, p, m)
         case BlackRook => Left("Invalid move.")
         case BlackKing => Left("Invalid move.")
         case BlackBishop => Left("Invalid move.")
-        case BlackKnight => Left("Invalid move.")
+        case BlackKnight => validBlackKnightMove(cg, p, m)
       }
     }
   }
+
+  def validWhiteKnightMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
+    val b = (m.src.x - m.dest.x).abs == 1 && (m.src.y - m.dest.y).abs == 2
+    val c = (m.src.x - m.dest.x).abs == 2 && (m.src.y - m.dest.y).abs == 1
+    if (b || c) {
+      cg.board(m.dest.x)(m.dest.y) match {
+        case Some(p2) =>
+          (Player.getPlayer(p), Player.getPlayer(p2)) match {
+            case (White, White) => Left("Invalid move")
+            case _ => Right(ChessGame._move(cg, p, m))
+          }
+        case None => Right(ChessGame._move(cg, p, m))
+      }
+    } else Left("Invalid move.")
+  }
+
+  def validBlackKnightMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
+    val b = (m.src.x - m.dest.x).abs == 1 && (m.src.y - m.dest.y).abs == 2
+    val c = (m.src.x - m.dest.x).abs == 2 && (m.src.y - m.dest.y).abs == 1
+    if (b || c) {
+      cg.board(m.dest.x)(m.dest.y) match {
+        case Some(p2) =>
+          (Player.getPlayer(p), Player.getPlayer(p2)) match {
+            case (Black, Black) => Left("Invalid move")
+            case _ => Right(ChessGame._move(cg, p, m))
+          }
+        case None => Right(ChessGame._move(cg, p, m))
+      }
+    } else Left("Invalid move.")
+  }
+
   def validWhitePawnMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
     if (m.src.y == 1 && m.dest.y == 3 && m.src.x == m.dest.x) {
       (cg.board(m.dest.x)(m.dest.y), cg.board(m.dest.x)(m.dest.y-1)) match {
