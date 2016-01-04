@@ -87,21 +87,7 @@ object ChessGame {
   }
   def move(cg: ChessGame, m: Move): Either[String, ChessGame] =  {
     cg.status match {
-      case Undecided =>
-        if(m.src.x > cg.board.length - 1 || m.src.y > cg.board.length - 1
-             || m.dest.x > cg.board.length - 1 || m.dest.y > cg.board.length - 1)
-          Left("Invalid move")
-        else cg.board(m.src.x)(m.src.y) match {
-          case None => Left(s"No piece in ${m.src.x}${m.src.y}.")
-          case Some(p) => {
-            (cg.currentPlayer, Player.getPlayer(p)) match {
-              case (White, White) | (Black, Black) => {
-                ChessGame.validMove(cg, p, m)
-              }
-              case (White, Black) | (Black, White) => Left(s"${cg.currentPlayer} turn.")
-            }
-          }
-        }
+      case Undecided => ChessGame.validMove(cg, m)
       case DrawRequest => Left("""Draw request pending. Type "nodraw" or "draw".""")
       case Stalemate(p) => Left(s"Stalemate! $p can no longer move.}")
       case Checkmate(p) => Left(s"${p} wins.}")
@@ -127,30 +113,29 @@ object ChessGame {
     }
     ChessGame(cg.board, player, status, cg.history :+ m)
   }
-  def validMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
+
+  def validMove(cg: ChessGame, m: Move): Either[String, ChessGame] =  {
     if(m.src == m.dest) {
-      Left("Invalid move.")
+      Left("move in same position")
+    } else if (m.src.x > cg.board.length - 1 || m.src.y > cg.board.length - 1
+                 || m.dest.x > cg.board.length - 1 || m.dest.y > cg.board.length - 1) {
+      Left("out of bounds move")
     } else {
-      cg.board(m.dest.x)(m.dest.y) match {
-        case Some(p2) =>
-          (Player.getPlayer(p), Player.getPlayer(p2)) match {
-            case (c1, c2) if(c1 == c2) => return Left("Invalid move")
-            case _ =>
+      (cg.board(m.src.x)(m.src.y), cg.board(m.dest.x)(m.dest.y)) match {
+        case (None, _) => Left(s"No piece in ${m.src.x}${m.src.y}.")
+        case (Some(p), _) if(cg.currentPlayer != Player.getPlayer(p)) => Left(s"${cg.currentPlayer} turn.")
+        case (Some(p), Some(p2)) if (Player.getPlayer(p) == Player.getPlayer(p2)) => Left("can't take your own piece")
+        case (Some(p), _) => {
+          p match {
+            case WhitePawn => validWhitePawnMove(cg, p, m)
+            case WhiteRook | BlackRook => validRookMove(cg, p, m)
+            case WhiteQueen | BlackQueen => validQueenMove(cg, p, m)
+            case WhiteKing | BlackKing => validKingMove(cg, p, m)
+            case WhiteBishop | BlackBishop => validBishopMove(cg, p, m)
+            case WhiteKnight | BlackKnight => validKnightMove(cg, p, m)
+            case BlackPawn => validBlackPawnMove(cg, p, m)
           }
-        case _ =>
-      }
-      p match {
-        case WhitePawn => validWhitePawnMove(cg, p, m)
-        case WhiteRook => validRookMove(cg, p, m)
-        case WhiteQueen | BlackQueen => validQueenMove(cg, p, m)
-        case WhiteKing => validKingMove(cg, p, m)
-        case WhiteBishop => validBishopMove(cg, p, m)
-        case WhiteKnight => validKnightMove(cg, p, m)
-        case BlackPawn => validBlackPawnMove(cg, p, m)
-        case BlackRook => validRookMove(cg, p, m)
-        case BlackKing => validKingMove(cg, p, m)
-        case BlackBishop => validBishopMove(cg, p, m)
-        case BlackKnight => validKnightMove(cg, p, m)
+        }
       }
     }
   }
@@ -172,7 +157,7 @@ object ChessGame {
                   }
                   val cg2 = ChessGame._move(ChessGame(arr, cg.currentPlayer, cg.status, cg.history), p, m)
                   ChessGame.toString(cg2)
-                  validMove(cg2, p2, Move(Position(i, j), m.dest)) match {
+                  validMove(cg2, Move(Position(i, j), m.dest)) match {
                     case Right(x) => return Left(s"Can't put yourself in check")
                     case Left(_) =>
                   }
