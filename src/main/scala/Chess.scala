@@ -134,15 +134,30 @@ object ChessGame {
         case WhitePawn => validWhitePawnMove(cg, p, m)
         case WhiteRook => validRookMove(cg, p, m)
         case WhiteQueen | BlackQueen => validQueenMove(cg, p, m)
-        case WhiteKing => Left("Invalid move.")
+        case WhiteKing => validKingMove(cg, p, m)
         case WhiteBishop => validBishopMove(cg, p, m)
         case WhiteKnight => validKnightMove(cg, p, m)
         case BlackPawn => validBlackPawnMove(cg, p, m)
         case BlackRook => validRookMove(cg, p, m)
-        case BlackKing => Left("Invalid move.")
+        case BlackKing => validKingMove(cg, p, m)
         case BlackBishop => validBishopMove(cg, p, m)
         case BlackKnight => validKnightMove(cg, p, m)
       }
+    }
+  }
+
+  def validKingMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] = {
+    if ((m.dest.y - m.src.y).abs <= 1 && (m.dest.x - m.src.x).abs <= 1) {
+      cg.board(m.dest.x)(m.dest.y) match {
+        case Some(p2) =>
+          (Player.getPlayer(p), Player.getPlayer(p2)) match {
+            case (c1, c2) if(c1 == c2) => Left("Invalid move")
+            case _ => Right(ChessGame._move(cg, p, m))
+          }
+        case None => Right(ChessGame._move(cg, p, m))
+      }
+    } else {
+      Left("Invalid move")
     }
   }
 
@@ -150,7 +165,7 @@ object ChessGame {
     (validRookMove(cg, p, m), validBishopMove(cg, p, m)) match {
       case (Left, Right(x)) => Right(x)
       case (Right(x), Left) => Right(x)
-      case _ => Left("Invalid move.") 
+      case _ => Left("Invalid move.")
     }
   }
 
@@ -373,21 +388,6 @@ object ChessGame {
     }
   }
 
-  def validKingMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
-    if ((m.dest.y - m.src.y).abs <= 1 && (m.src.x - m.dest.x).abs <= 1) {
-      cg.board(m.dest.x)(m.dest.y) match {
-        case Some(p2) => {
-          (Player.getPlayer(p), Player.getPlayer(p2)) match {
-            case (White, White) | (Black, Black) => Left("Invalid move.")
-            case _ => Left("Invalid move.")
-          }
-        }
-        case None => Left("Invalid move.")
-      }
-    } else {
-      Left("Invalid move")
-    }
-  }
   def convertChar(s: Char): Option[Piece] = {
     s match {
       case '♖' => Some(WhiteRook)

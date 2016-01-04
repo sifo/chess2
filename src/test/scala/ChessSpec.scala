@@ -499,6 +499,30 @@ class ChessSpec extends FunSpec with Matchers  {
         m.foreach(ChessGame.move(cg, _) should be ('left))
       }
     }
+
+    describe("when pinned") {
+
+      val result = {
+        val b = """
+          8   . . . . ♚ . . .
+          7   . . . . . . . .
+          6   . ♝ . . . . . .
+          5   . . . . . . . .
+          4   . . . ♙ . . . .
+          3   . . . . ♔ . . .
+          2   . . . . . . . .
+          1   . . . . . . . .
+
+              a b c d e f g h
+        """
+        val m = Move(Position('d', 4), Position('d', 5))
+        ChessGame.move(ChessGame(b, White), m)
+      }
+
+      it("fails to move"){
+        result should be ('left)
+      }
+    }
   }
 
   describe("black pawn") {
@@ -766,6 +790,30 @@ class ChessSpec extends FunSpec with Matchers  {
         m.foreach(ChessGame.move(cg, _) should be ('left))
       }
     }
+
+    describe("when pinned") {
+
+      val result = {
+        val b = """
+          8   . . . . ♚ . . .
+          7   . . . ♟ . . . .
+          6   . . . . . . ♞ .
+          5   . . . . . . . .
+          4   ♗ . . ♙ . . . .
+          3   . . . . ♔ . . .
+          2   . . . . . . . .
+          1   . . . . . . . .
+
+              a b c d e f g h
+        """
+        val m = Move(Position('d', 7), Position('d', 6))
+        ChessGame.move(ChessGame(b, Black), m)
+      }
+
+      it("fails to move"){
+        result should be ('left)
+      }
+    }
   }
 
   describe("knight") {
@@ -986,6 +1034,30 @@ class ChessSpec extends FunSpec with Matchers  {
 
       it("fails to move"){
         m.foreach(ChessGame.move(cg, _) should be ('left))
+      }
+    }
+
+    describe("when pinned") {
+
+      val result = {
+        val b = """
+          8   . . . . ♚ . . .
+          7   . . . ♞ . . . .
+          6   . . . . . . ♟ .
+          5   . . . . . . . .
+          4   ♗ . . ♙ . . . .
+          3   . . . . ♔ . . .
+          2   . . . . . . . .
+          1   . . . . . . . .
+
+              a b c d e f g h
+        """
+        val m = Move(Position('d', 7), Position('f', 6))
+        ChessGame.move(ChessGame(b, Black), m)
+      }
+
+      it("fails to move"){
+        result should be ('left)
       }
     }
   }
@@ -1324,6 +1396,30 @@ class ChessSpec extends FunSpec with Matchers  {
         m.foreach(ChessGame.move(cg, _) should be ('left))
       }
     }
+
+    describe("when pinned") {
+
+      val result = {
+        val b = """
+          8   . . . . ♚ . . .
+          7   . . . ♝ . . . .
+          6   . . . . . . ♟ .
+          5   . . . . . . . .
+          4   ♗ . . ♙ ♔ . . .
+          3   . . . . . . . .
+          2   . . . . . . . .
+          1   . . . . . . . .
+
+              a b c d e f g h
+        """
+        val m = Move(Position('d', 7), Position('g', 5))
+        ChessGame.move(ChessGame(b, Black), m)
+      }
+
+      it("fails to move"){
+        result should be ('left)
+      }
+    }
   }
 
   describe("rook") {
@@ -1658,6 +1754,30 @@ class ChessSpec extends FunSpec with Matchers  {
 
       it("fails to move"){
         m.foreach(ChessGame.move(cg, _) should be ('left))
+      }
+    }
+
+    describe("when pinned") {
+
+      val result = {
+        val b = """
+          8   . . . . ♚ . . .
+          7   . . . ♜ . . . .
+          6   . . . . . . ♟ .
+          5   . . . . . . . .
+          4   ♗ . . ♙ ♔ . . .
+          3   . . . . . . . .
+          2   . . . . . . . .
+          1   . . . . . . . .
+
+              a b c d e f g h
+        """
+        val m = Move(Position('d', 7), Position('e', 7))
+        ChessGame.move(ChessGame(b, Black), m)
+      }
+
+      it("fails to move"){
+        result should be ('left)
       }
     }
   }
