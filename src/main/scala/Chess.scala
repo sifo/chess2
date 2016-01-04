@@ -102,8 +102,15 @@ object ChessGame {
     }
   }
   def _move(cg: ChessGame, p: Piece, m: Move): ChessGame = {
-    cg.board(m.dest.x)(m.dest.y) = cg.board(m.src.x)(m.src.y)
-    cg.board(m.src.x)(m.src.y) = None
+    val len = cg.board.length
+    val arr = Array.ofDim[Option[Piece]](len, len)
+    for(k <- 0 to len - 1) {
+      for(l <- 0 to len - 1) {
+        arr(k)(l) = cg.board(k)(l)
+      }
+    }
+    arr(m.dest.x)(m.dest.y) = arr(m.src.x)(m.src.y)
+    arr(m.src.x)(m.src.y) = None
     val (player, status) = {
       p match {
         case WhitePawn if m.dest.y == 7 => (cg.currentPlayer, PromotionPending(m.dest))
@@ -111,7 +118,7 @@ object ChessGame {
         case _ => (cg.currentPlayer.opponent, Undecided)
       }
     }
-    ChessGame(cg.board, player, status, cg.history :+ m)
+    ChessGame(arr, player, status, cg.history :+ m)
   }
 
   def validMove(cg: ChessGame, m: Move): Either[String, ChessGame] =  {
@@ -148,15 +155,7 @@ object ChessGame {
             case Some(p2) =>
               (Player.getPlayer(p), Player.getPlayer(p2)) match {
                 case (c1, c2) if(c1 != c2) => {
-                  val len = 8
-                  val arr = Array.ofDim[Option[Piece]](len, len)
-                  for(k <- 0 to len - 1) {
-                    for(l <- 0 to len - 1) {
-                      arr(k)(l) = cg.board(k)(l)
-                    }
-                  }
-                  val cg2 = ChessGame._move(ChessGame(arr, cg.currentPlayer, cg.status, cg.history), p, m)
-                  ChessGame.toString(cg2)
+                  val cg2 = ChessGame._move(cg, p, m)
                   validMove(cg2, Move(Position(i, j), m.dest)) match {
                     case Right(x) => return Left(s"Can't put yourself in check")
                     case Left(_) =>
