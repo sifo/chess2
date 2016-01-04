@@ -307,6 +307,30 @@ class KingSpec extends FunSpec with Matchers  {
       }
     }
 
+    describe("when check 2.5") {
+
+      val result = {
+        val b = """
+          8   . . . ♜ . ♚ . .
+          7   . . . . . . . .
+          6   . . . . . . . .
+          5   . . . . . . ♟ .
+          4   . . ♔ ♟ . . . .
+          3   . . . . . . . .
+          2   . . . . . . . .
+          1   . . . . . . . .
+
+              a b c d e f g h
+        """
+        val m = Move(Position('c', 4), Position('d', 4))
+        ChessGame.move(ChessGame(b, White), m)
+      }
+
+      it("fails to move"){
+        result should be ('left)
+      }
+    }
+
     describe("when check 3") {
 
       val result = {
