@@ -136,34 +136,55 @@ object ChessGame {
         case (None, _) => Left(s"No piece in ${m.src.x}${m.src.y}.")
         case (Some(p), _) if(cg.currentPlayer != Player.getPlayer(p)) => Left(s"${cg.currentPlayer} turn.")
         case (Some(p), Some(p2)) if (Player.getPlayer(p) == Player.getPlayer(p2)) => Left("can't take your own piece")
-        case (Some(p), _) => {
-          p match {
-            case WhitePawn => validWhitePawnMove(cg, p, m)
-            case WhiteRook | BlackRook => validRookMove(cg, p, m)
-            case WhiteQueen | BlackQueen => validQueenMove(cg, p, m)
-            case WhiteKing | BlackKing => validKingMove(cg, p, m)
-            case WhiteBishop | BlackBishop => validBishopMove(cg, p, m)
-            case WhiteKnight | BlackKnight => validKnightMove(cg, p, m)
-            case BlackPawn => validBlackPawnMove(cg, p, m)
-          }
-        }
+        case (Some(p), _) if (checkedByOpponentAfterMove(cg, p, m)) => Left("Can't put yourself in check")
+        case (Some(p), _) => _validMove(cg, p, m)
       }
+    }
+  }
+
+  def _validMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
+    p match {
+      case WhitePawn => validWhitePawnMove(cg, p, m)
+      case WhiteRook | BlackRook => validRookMove(cg, p, m)
+      case WhiteQueen | BlackQueen => validQueenMove(cg, p, m)
+      case WhiteKing | BlackKing => validKingMove(cg, p, m)
+      case WhiteBishop | BlackBishop => validBishopMove(cg, p, m)
+      case WhiteKnight | BlackKnight => validKnightMove(cg, p, m)
+      case BlackPawn => validBlackPawnMove(cg, p, m)
+    }
+  }
+
+  def getKingPosition(cg: ChessGame, player: Player): Option[Position] = {
+    for(i <- 0 to ChessGame.length - 1)
+      for(j <- 0 to ChessGame.length - 1)
+        (cg.board(i)(j), player) match {
+          case (Some(WhiteKing), White) | (Some(BlackKing), Black) => return Some(Position(i, j))
+          case (_, _) =>
+        }
+    None
+  }
+
+  def checkedByOpponentAfterMove(cg: ChessGame, p: Piece, m: Move): Boolean = {
+    val cg2 = ChessGame._move(cg, p, m)
+    getKingPosition(cg2, Player.getPlayer(p)) match {
+      case Some(kingPos) =>
+        for(i <- 0 to ChessGame.length - 1)
+          for(j <- 0 to ChessGame.length - 1)
+            cg.board(i)(j) match {
+              case Some(p2) if (Player.getPlayer(p) != Player.getPlayer(p2)) =>
+                _validMove(cg2, p2, Move(Position(i, j), kingPos)) match {
+                  case Right(x) => return true
+                  case Left(_) =>
+                }
+              case _ =>
+            }
+        false
+      case None => false
     }
   }
 
   def validKingMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] = {
     if ((m.dest.y - m.src.y).abs <= 1 && (m.dest.x - m.src.x).abs <= 1) {
-      for(i <- 0 to ChessGame.length - 1)
-        for(j <- 0 to ChessGame.length - 1)
-          cg.board(i)(j) match {
-            case Some(p2) if (Player.getPlayer(p) != Player.getPlayer(p2)) =>
-              val cg2 = ChessGame._move(cg, p, m)
-              validMove(cg2, Move(Position(i, j), m.dest)) match {
-                case Right(x) => return Left(s"Can't put yourself in check")
-                case Left(_) =>
-              }
-            case _ =>
-          }
       Right(ChessGame._move(cg, p, m))
     } else {
       Left("Invalid move")
