@@ -123,7 +123,7 @@ class ChessSpec extends FunSpec with Matchers  {
 
     describe("white pawn") {
 
-      def chessGame = {
+      val chessGame = {
         val b = """
             8   . . . . . . . .
             7   ♙ . . . . ♚ . .
@@ -179,7 +179,7 @@ class ChessSpec extends FunSpec with Matchers  {
 
     describe("black pawn") {
 
-      def chessGame = {
+      val chessGame = {
         val b = """
             8   . . . . . . . .
             7   . . . . . ♚ . .
