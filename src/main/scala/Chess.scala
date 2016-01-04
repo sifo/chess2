@@ -54,6 +54,8 @@ case object Black extends Player {
 
 object ChessGame {
 
+  val length = 8
+
   def apply(b: String, p: Player, s: Status, h: List[Move]) = new ChessGame(b, p, s, h)
   def apply(b: String, p: Player, s: Status) = new ChessGame(b, p, s)
   def apply(b: String, p: Player) = new ChessGame(b, p)
@@ -62,9 +64,9 @@ object ChessGame {
 
   def toString(cg: ChessGame): String = {
     var res = "\n"
-    for(j <- cg.board(0).length - 1 to 0 by -1){
+    for(j <- ChessGame.length - 1 to 0 by -1){
       res += "  " + (j + 1) + "  "
-      for(i <- 0 to cg.board.length - 1){
+      for(i <- 0 to ChessGame.length - 1){
         res += Piece.toString(cg.board(i)(j)) + " "
       }
       res += "\n"
@@ -103,27 +105,16 @@ object ChessGame {
   }
 
   def replace(cg: ChessGame, p: Option[Piece], pos: Position): ChessGame = {
-    val len = cg.board.length
-    val arr = Array.ofDim[Option[Piece]](len, len)
-    for(i <- 0 to len - 1) {
-      for(j <- 0 to len - 1) {
-        arr(i)(j) = cg.board(i)(j)
-      }
-    }
-    arr(pos.x)(pos.y) = p
+    val idx = ChessGame.length * (ChessGame.length-1-pos.y) + pos.x
+    val arr = cg._board.updated(idx, p)
     ChessGame(arr, cg.currentPlayer, cg.status, cg.history)
   }
 
   def _move(cg: ChessGame, p: Piece, m: Move): ChessGame = {
-    val len = cg.board.length
-    val arr = Array.ofDim[Option[Piece]](len, len)
-    for(i <- 0 to len - 1) {
-      for(j <- 0 to len - 1) {
-        arr(i)(j) = cg.board(i)(j)
-      }
+    val cg2 = {
+      val c = ChessGame.replace(cg, cg.board(m.src.x)(m.src.y), m.dest)
+      ChessGame.replace(c, None, m.src)
     }
-    arr(m.dest.x)(m.dest.y) = arr(m.src.x)(m.src.y)
-    arr(m.src.x)(m.src.y) = None
     val (player, status) = {
       p match {
         case WhitePawn if m.dest.y == 7 => (cg.currentPlayer, PromotionPending(m.dest))
@@ -131,14 +122,14 @@ object ChessGame {
         case _ => (cg.currentPlayer.opponent, Undecided)
       }
     }
-    ChessGame(arr, player, status, cg.history :+ m)
+    ChessGame(cg2.board, player, status, cg.history :+ m)
   }
 
   def validMove(cg: ChessGame, m: Move): Either[String, ChessGame] =  {
     if(m.src == m.dest) {
       Left("move in same position")
-    } else if (m.src.x > cg.board.length - 1 || m.src.y > cg.board.length - 1
-                 || m.dest.x > cg.board.length - 1 || m.dest.y > cg.board.length - 1) {
+    } else if (m.src.x > ChessGame.length - 1 || m.src.y > ChessGame.length - 1
+                 || m.dest.x > ChessGame.length - 1 || m.dest.y > ChessGame.length - 1) {
       Left("out of bounds move")
     } else {
       (cg.board(m.src.x)(m.src.y), cg.board(m.dest.x)(m.dest.y)) match {
@@ -162,8 +153,8 @@ object ChessGame {
 
   def validKingMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] = {
     if ((m.dest.y - m.src.y).abs <= 1 && (m.dest.x - m.src.x).abs <= 1) {
-      for(i <- 0 to cg.board.length - 1)
-        for(j <- 0 to cg.board.length - 1)
+      for(i <- 0 to ChessGame.length - 1)
+        for(j <- 0 to ChessGame.length - 1)
           cg.board(i)(j) match {
             case Some(p2) if (Player.getPlayer(p) != Player.getPlayer(p2)) =>
               val cg2 = ChessGame._move(cg, p, m)
@@ -179,44 +170,11 @@ object ChessGame {
     }
   }
 
-  def validQueenMove2(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] = {
-    (validRookMove(cg, p, m), validBishopMove(cg, p, m)) match {
-      case (Left, Right(x)) => Right(x)
-      case (Right(x), Left) => Right(x)
-      case _ => Left("Invalid move.")
-    }
-  }
-
   def validQueenMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] = {
-    def sign(i: Int, j: Int): Int = if(i - j > 0) 1 else -1
-
-    if (m.src.x == m.dest.x ||  m.src.y == m.dest.y) {
-      if (m.src.x != m.dest.x) {
-        for(i <- 1 to (m.src.x - m.dest.x).abs - 1) {
-          cg.board(m.src.x + i * (sign(m.dest.x, m.src.x)))(m.dest.y) match {
-            case Some(_) => return Left("Invalid move.")
-            case _ =>
-          }
-        }
-      }
-      else if (m.src.y != m.dest.y) {
-        for(i <- 1 to (m.src.y - m.dest.y).abs - 1) {
-          cg.board(m.dest.x)(m.src.y + i * (sign(m.dest.y, m.src.y))) match {
-            case Some(_) => return Left("Invalid move.")
-            case _ =>
-          }
-        }
-      }
-      Right(ChessGame._move(cg, p, m))
-    } else if ((m.src.x - m.dest.x).abs == (m.src.y - m.dest.y).abs) {
-      for(i <- 1 to (m.src.x - m.dest.x).abs - 1) {
-        cg.board(m.src.x + i * (sign(m.dest.x, m.src.x)))(m.src.y + i * (sign(m.dest.y, m.src.y))) match {
-          case Some(_) => return Left("Invalid move.")
-          case _ =>
-        }
-      }
-      Right(ChessGame._move(cg, p, m))
-    } else Left("Invalid move.")
+    validRookMove(cg, p, m) match {
+      case Left(_) => validBishopMove(cg, p, m)
+      case Right(x) => Right(x)
+    }
   }
 
   def validRookMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] = {
@@ -296,6 +254,7 @@ object ChessGame {
       Left("Invalid move")
     }
   }
+
   def validBlackPawnMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
     if (m.src.y == 6 && m.dest.y == 4 && m.src.x == m.dest.x) {
       (cg.board(m.dest.x)(m.dest.y), cg.board(m.dest.x)(m.dest.y-1)) match {
@@ -309,31 +268,17 @@ object ChessGame {
       }
     } else if (m.src.y - m.dest.y == 1 && (m.src.x - m.dest.x).abs == 1) {
       cg.board(m.dest.x)(m.dest.y) match {
-        case Some(p2) => {
-          (Player.getPlayer(p), Player.getPlayer(p2)) match {
-            case (Black, Black) => Left("Invalid move")
-            case _ => Right(ChessGame._move(cg, p, m))
-          }
-        }
+        case Some(p2) => Right(ChessGame._move(cg, p, m))
         case None => {
           cg.board(m.dest.x)(m.dest.y+1) match {
-            // check en passant
-            case Some(p2) => {
-              p2 match {
-                case WhitePawn =>
-                  if(cg.history.length > 0 && cg.history.last.dest == Position(m.dest.x, m.dest.y+1)
-                       && cg.history.last.src == Position(m.dest.x, m.dest.y-1)) {
-                    cg.board(m.dest.x)(m.dest.y+1) = None
-                    Right(ChessGame._move(cg, p, m))
-                  } else {
-                    Left("Invalid move")
-                  }
-                case _ =>
-                  Left("Invalid move")
-              }
-            }
-            case _ => 
-              Left("Invalid move")
+            // look if en passant move
+            case Some(p2) if (p2 == WhitePawn
+                                && cg.history.length > 0
+                                && cg.history.last.dest == Position(m.dest.x, m.dest.y+1)
+                                && cg.history.last.src == Position(m.dest.x, m.dest.y-1)) =>
+              val cg2 = ChessGame.replace(cg, None, Position(m.dest.x, m.dest.y+1))
+              Right(ChessGame._move(cg2, p, m))
+            case _ => Left("Invalid move")
           }
         }
       }
@@ -359,25 +304,20 @@ object ChessGame {
       case _ => None
     }
   }
-  def convert(s: String): Array[Array[Option[Piece]]] = {
+  def convert(s: String): List[Option[Piece]] = {
     val p = List('♖', '♘', '♗', '♕', '♔', '♙', '♜', '♞',  '♝',  '♛',  '♚',  '♟',  '.')
-    val l = {
-      val r = s.filter(p.contains(_)).toCharArray.map(convertChar(_))
-      if(r.length != 64) 
-        throw new IllegalArgumentException("the board should have 64 valid chess characters")
-      r
-    }
-    val len = 8
-    val arr = Array.ofDim[Option[Piece]](len, len)
-    for(i <- 0 to len - 1) {
-      for(j <- 0 to len - 1) {
-        arr(i)(j) = l(len * (len-1-j) + i)
-      }
-    }
-    arr
+    // val l = {
+    val r = s.filter(p.contains(_)).toList.map(convertChar(_))
+    if(r.length != 64) 
+      throw new IllegalArgumentException("the board should have 64 valid chess characters")
+    r
   }
 }
-case class ChessGame(val board: Array[Array[Option[Piece]]], val currentPlayer: Player, val status: Status, val history: List[Move]) {
+case class ChessGame(val _board: List[Option[Piece]], val currentPlayer: Player, val status: Status, val history: List[Move]) {
+
+  def board(): List[Option[Piece]] = _board
+
+  def board(i: Int)(j: Int): Option[Piece] = _board(ChessGame.length * (ChessGame.length-1-j) + i)
 
   def this(board: String, currentPlayer: Player, status: Status, h: List[Move]) {
     this(ChessGame.convert(board), currentPlayer, status, h)
@@ -404,21 +344,6 @@ case class ChessGame(val board: Array[Array[Option[Piece]]], val currentPlayer: 
   def this(board: String) {
     this(board, White)
   }
-  override def equals(that: Any): Boolean =
-    that match {
-      case that: ChessGame =>
-        for(i <- 0 to this.board.length - 1){
-          for(j <- 0 to this.board(i).length - 1){
-            (this.board(i)(j), that.board(i)(j)) match {
-              case (None, None) =>
-              case (None, Some(_)) | (Some(_), None) => return false
-              case (Some(a), Some(b)) => if(a != b) return false
-            }
-          }
-        }
-        return this.currentPlayer == that.currentPlayer && this.status == that.status && this.history == that.history
-      case _ => return false
-    }
 }
 
 object Position {
