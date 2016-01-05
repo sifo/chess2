@@ -470,7 +470,7 @@ object Chess {
               cg = x
               cg.status match {
                 case Stalemate(p) => println(s"Stalemate! $p can no longer move."); running = false
-                case Checkmate(p) => println(s"${p} wins."); running = false
+                case Checkmate(p) => println(s"Checkmate! ${p} wins."); running = false
                 case PromotionPending(d) =>
                   println(s"""Promote pending for ${cg.currentPlayer}. Type "queen", "rook", "bishop" or "knight".""")
                 case _ => 
