@@ -89,7 +89,18 @@ object ChessGame {
   }
   def move(cg: ChessGame, m: Move): Either[String, ChessGame] =  {
     cg.status match {
-      case Undecided => ChessGame.validMove(cg, m)
+      case Undecided => 
+        ChessGame.validMove(cg, m) match {
+          case Right(cg2) =>
+            if(isMated(cg2)) {
+              Right(ChessGame(cg2.board, cg2.currentPlayer, Checkmate(cg2.currentPlayer.opponent), cg2.history))
+            } else if(isStalemated(cg2)) {
+              Right(ChessGame(cg2.board, cg2.currentPlayer, Stalemate(cg2.currentPlayer), cg2.history))
+            } else {
+              Right(cg2)
+            }
+          case x => x
+        }
       case DrawRequest => Left("""Draw request pending. Type "nodraw" or "draw".""")
       case Stalemate(p) => Left(s"Stalemate! $p can no longer move.}")
       case Checkmate(p) => Left(s"${p} wins.}")
@@ -110,10 +121,47 @@ object ChessGame {
     ChessGame(arr, cg.currentPlayer, cg.status, cg.history)
   }
 
+  def moves(cg: ChessGame, piece: Piece, src: Position): List[Position] = {
+    var res: List[Position] = List[Position]()
+    for(i <- 0 to ChessGame.length - 1) {
+      for(j <- 0 to ChessGame.length - 1) {
+        val pos = Position(i,j)
+        validMove(cg, Move(src, pos)) match {
+          case Right(x) =>
+            res = res :+ pos
+          case Left(x) =>
+          case _ =>
+        }
+      }
+    }
+    res
+  }
+
+  def isMated(cg: ChessGame): Boolean = hasNoLegalMove(cg) && isChecked(cg)
+
+  def isStalemated(cg: ChessGame): Boolean = hasNoLegalMove(cg) && !isChecked(cg)
+
+  def hasNoLegalMove(cg: ChessGame): Boolean = {
+    for(i <- 0 to ChessGame.length - 1) {
+      for(j <- 0 to ChessGame.length - 1) {
+        cg.board(i)(j) match {
+          case Some(piece) if (Player.getPlayer(piece) == cg.currentPlayer) =>
+            val tmp = moves(cg, piece, Position(i,j))
+            val bbb = cg
+            if(!tmp.isEmpty) {
+              return false
+            }
+          case _ =>
+        }
+      }
+    }
+    true
+  }
+
   def _move(cg: ChessGame, p: Piece, m: Move): ChessGame = {
-    val cg2 = {
+    val newBoard = {
       val c = ChessGame.replace(cg, cg.board(m.src.x)(m.src.y), m.dest)
-      ChessGame.replace(c, None, m.src)
+      ChessGame.replace(c, None, m.src)._board
     }
     val (player, status) = {
       p match {
@@ -122,14 +170,12 @@ object ChessGame {
         case _ => (cg.currentPlayer.opponent, Undecided)
       }
     }
-    ChessGame(cg2.board, player, status, cg.history :+ m)
+    ChessGame(newBoard, player, status, cg.history :+ m)
   }
 
   def validMove(cg: ChessGame, m: Move): Either[String, ChessGame] =  {
-    if(m.src == m.dest) {
-      Left("move in same position")
-    } else if (m.src.x > ChessGame.length - 1 || m.src.y > ChessGame.length - 1
-                 || m.dest.x > ChessGame.length - 1 || m.dest.y > ChessGame.length - 1) {
+    if (m.src.x > ChessGame.length - 1 || m.src.y > ChessGame.length - 1
+          || m.dest.x > ChessGame.length - 1 || m.dest.y > ChessGame.length - 1) {
       Left("out of bounds move")
     } else {
       (cg.board(m.src.x)(m.src.y), cg.board(m.dest.x)(m.dest.y)) match {
@@ -137,21 +183,24 @@ object ChessGame {
         case (Some(p), _) if(cg.currentPlayer != Player.getPlayer(p)) => Left(s"${cg.currentPlayer} turn.")
         case (Some(p), Some(p2)) if (Player.getPlayer(p) == Player.getPlayer(p2)) => Left("can't take your own piece")
         case (Some(p), _) if (checkedByOpponentAfterMove(cg, p, m)) => Left("Can't put yourself in check")
-        case (Some(p), _) => _validMove(cg, p, m)
+        case (Some(p), _) => _validMove(cg, p, m) 
       }
     }
   }
 
   def _validMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
-    p match {
-      case WhitePawn => validWhitePawnMove(cg, p, m)
-      case WhiteRook | BlackRook => validRookMove(cg, p, m)
-      case WhiteQueen | BlackQueen => validQueenMove(cg, p, m)
-      case WhiteKing | BlackKing => validKingMove(cg, p, m)
-      case WhiteBishop | BlackBishop => validBishopMove(cg, p, m)
-      case WhiteKnight | BlackKnight => validKnightMove(cg, p, m)
-      case BlackPawn => validBlackPawnMove(cg, p, m)
-    }
+    if(m.src == m.dest)
+      Left("move in same position")
+    else
+      p match {
+        case WhitePawn => validWhitePawnMove(cg, p, m)
+        case WhiteRook | BlackRook => validRookMove(cg, p, m)
+        case WhiteQueen | BlackQueen => validQueenMove(cg, p, m)
+        case WhiteKing | BlackKing => validKingMove(cg, p, m)
+        case WhiteBishop | BlackBishop => validBishopMove(cg, p, m)
+        case WhiteKnight | BlackKnight => validKnightMove(cg, p, m)
+        case BlackPawn => validBlackPawnMove(cg, p, m)
+      }
   }
 
   def getKingPosition(cg: ChessGame, player: Player): Option[Position] = {
@@ -164,6 +213,23 @@ object ChessGame {
     None
   }
 
+  def isChecked(cg: ChessGame): Boolean = {
+    getKingPosition(cg, cg.currentPlayer) match {
+      case Some(kingPos) =>
+        for(i <- 0 to ChessGame.length - 1)
+          for(j <- 0 to ChessGame.length - 1)
+            cg.board(i)(j) match {
+              case Some(p2) if (cg.currentPlayer != Player.getPlayer(p2)) =>
+                _validMove(cg, p2, Move(Position(i, j), kingPos)) match {
+                  case Right(x) => return true
+                  case Left(_) =>
+                }
+              case _ =>
+            }
+        false
+      case None => false
+    }
+  }
   def checkedByOpponentAfterMove(cg: ChessGame, p: Piece, m: Move): Boolean = {
     val cg2 = ChessGame._move(cg, p, m)
     getKingPosition(cg2, Player.getPlayer(p)) match {

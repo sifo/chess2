@@ -392,7 +392,7 @@ class KingSpec extends FunSpec with Matchers  {
 
       val cg = {
         val b = """
-          8   . . . . . . . .
+          8   . . . . . ♚ . .
           7   . . . . . . . .
           6   . . . . . . . .
           5   . . . . . . . .
@@ -404,6 +404,59 @@ class KingSpec extends FunSpec with Matchers  {
               a b c d e f g h
         """
         ChessGame(b, White)
+      }
+
+      it("fails to move"){
+        m.foreach(ChessGame.move(cg, _) should be ('left))
+      }
+    }
+
+    describe("when invalid move 2") {
+
+      val m = List(
+        Move(Position('d', 4), Position('d', 5))
+      )
+
+      val cg = {
+        val b = """
+          8   . . . . . ♚ . .
+          7   . . . . . . . .
+          6   . . . . . . . .
+          5   . . . ♙ . . . .
+          4   . . . ♔ . . . .
+          3   . . . . . . . .
+          2   . . . . . . . .
+          1   . . . . . . . .
+
+              a b c d e f g h
+        """
+        ChessGame(b, White)
+      }
+
+      it("fails to move"){
+        m.foreach(ChessGame.move(cg, _) should be ('left))
+      }
+    }
+    describe("when invalid move 3") {
+
+      val m = List(
+        Move(Position('f', 8), Position('f', 7))
+      )
+
+      val cg = {
+        val b = """
+          8   . . . . . ♚ . .
+          7   . . . . . ♟ . .
+          6   . . . . . . . .
+          5   . . . . . . . .
+          4   . . . ♔ . . . .
+          3   . . . . . . . .
+          2   . . . . . . . .
+          1   . . . . . . . .
+
+              a b c d e f g h
+        """
+        ChessGame(b, Black)
       }
 
       it("fails to move"){

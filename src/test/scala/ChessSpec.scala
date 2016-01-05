@@ -822,14 +822,14 @@ class ChessSpec extends FunSpec with Matchers  {
 
       val result = {
         val b = """
-          8   . . . . . . . .
+          8   . . . . . . . ♚
           7   . . . . . . . .
           6   . . . . . . . .
           5   . . . . . . . .
           4   . . . ♘ . . . .
           3   . . . . . . . .
           2   . . . . . . . .
-          1   . . . . . . . .
+          1   . . . . . ♔ . .
 
               a b c d e f g h
         """
@@ -839,14 +839,14 @@ class ChessSpec extends FunSpec with Matchers  {
 
       val expected = {
         val b = """
-          8   . . . . . . . .
+          8   . . . . . . . ♚
           7   . . . . . . . .
           6   . . ♘ . . . . .
           5   . . . . . . . .
           4   . . . . . . . .
           3   . . . . . . . .
           2   . . . . . . . .
-          1   . . . . . . . .
+          1   . . . . . ♔ . .
 
               a b c d e f g h
         """
@@ -863,14 +863,14 @@ class ChessSpec extends FunSpec with Matchers  {
 
       val result = {
         val b = """
-          8   . . . . . . . .
+          8   . . . . . . ♚ .
           7   . . . . . . . .
           6   . . . . . . . .
           5   . . . . . . . .
           4   . . . ♘ . . . .
           3   . . . . . . . .
           2   . . . . . . . .
-          1   . . . . . . . .
+          1   . . . . . . ♔ .
 
               a b c d e f g h
         """
@@ -880,14 +880,14 @@ class ChessSpec extends FunSpec with Matchers  {
 
       val expected = {
         val b = """
-          8   . . . . . . . .
+          8   . . . . . . ♚ .
           7   . . . . . . . .
           6   . . ♘ . . . . .
           5   . . . . . . . .
           4   . . . . . . . .
           3   . . . . . . . .
           2   . . . . . . . .
-          1   . . . . . . . .
+          1   . . . . . . ♔ .
 
               a b c d e f g h
         """
@@ -904,14 +904,14 @@ class ChessSpec extends FunSpec with Matchers  {
 
       val result = {
         val b = """
-          8   . . . . . . . .
+          8   . . . . . . ♚ .
           7   . . . . . . . .
           6   . . ♟ . . . . .
           5   . . . . . . . .
           4   . . . ♘ . . . .
           3   . . . . . . . .
           2   . . . . . . . .
-          1   . . . . . . . .
+          1   . . . . . . ♔ .
 
               a b c d e f g h
         """
@@ -921,14 +921,14 @@ class ChessSpec extends FunSpec with Matchers  {
 
       val expected = {
         val b = """
-          8   . . . . . . . .
+          8   . . . . . . ♚ .
           7   . . . . . . . .
           6   . . ♘ . . . . .
           5   . . . . . . . .
           4   . . . . . . . .
           3   . . . . . . . .
           2   . . . . . . . .
-          1   . . . . . . . .
+          1   . . . . . . ♔ .
 
               a b c d e f g h
         """
@@ -945,14 +945,14 @@ class ChessSpec extends FunSpec with Matchers  {
 
       val result = {
         val b = """
-          8   . . . . . . . .
+          8   . . . . . . ♚ .
           7   . . . . . . . .
           6   . . ♙ . . . . .
           5   . . . . . . . .
           4   . . . ♞ . . . .
           3   . . . . . . . .
           2   . . . . . . . .
-          1   . . . . . . . .
+          1   . . . . . . ♔ .
 
               a b c d e f g h
         """
@@ -962,14 +962,14 @@ class ChessSpec extends FunSpec with Matchers  {
 
       val expected = {
         val b = """
-          8   . . . . . . . .
+          8   . . . . . . ♚ .
           7   . . . . . . . .
           6   . . ♞ . . . . .
           5   . . . . . . . .
           4   . . . . . . . .
           3   . . . . . . . .
           2   . . . . . . . .
-          1   . . . . . . . .
+          1   . . . . . . ♔ .
 
               a b c d e f g h
         """
@@ -986,14 +986,14 @@ class ChessSpec extends FunSpec with Matchers  {
 
       val result = {
         val b = """
-          8   . . . . . . . .
+          8   . . . . . . ♚ .
           7   . . . . . . . .
           6   . . ♙ . . . . .
           5   . . . . . . . .
           4   . . . ♘ . . . .
           3   . . . . . . . .
           2   . . . . . . . .
-          1   . . . . . . . .
+          1   . . . . . . ♔ .
 
               a b c d e f g h
         """
@@ -1018,14 +1018,14 @@ class ChessSpec extends FunSpec with Matchers  {
 
       val cg = {
         val b = """
-          8   . . . . . . . .
+          8   . . . . . . ♚ .
           7   . . . . . . . .
           6   . . . . . . . .
           5   . . . . . . . .
           4   . . . ♘ . . . .
           3   . . . . . . . .
           2   . . . . . . . .
-          1   . . . . . . . .
+          1   . . . . . . ♔ .
 
               a b c d e f g h
         """
