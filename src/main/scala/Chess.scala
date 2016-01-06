@@ -393,7 +393,6 @@ object ChessGame {
   }
   def convert(s: String): List[Option[Piece]] = {
     val p = List('♖', '♘', '♗', '♕', '♔', '♙', '♜', '♞',  '♝',  '♛',  '♚',  '♟',  '.')
-    // val l = {
     val r = s.filter(p.contains(_)).toList.map(convertChar(_))
     if(r.length != 64) 
       throw new IllegalArgumentException("the board should have 64 valid chess characters")
@@ -476,7 +475,7 @@ object Chess {
                 case Checkmate(p) => println(ChessGame.toString(cg)); println(s"Checkmate! ${p} wins."); running = false
                 case PromotionPending(d) =>
                   println(s"""Promote pending for ${cg.currentPlayer}. Type "queen", "rook", "bishop" or "knight".""")
-                case _ => 
+                case _ =>
               }
             case Left(x) => println("Error: " + x)
           }
