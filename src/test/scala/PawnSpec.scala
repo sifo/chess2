@@ -380,6 +380,47 @@ class PawnSpec extends FunSpec with Matchers  {
         }
       }
 
+      describe("when after white"){
+
+        val result = {
+          val b = """
+            8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+            7   ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+            6   . . . . . . . .
+            5   . . . . . . . .
+            4   . . . . ♙ . . .
+            3   . . . . . . . .
+            2   ♙ ♙ ♙ ♙ . ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+
+                a b c d e f g h
+          """
+          val m = Move(Position('e', 7), Position('e', 5))
+          ChessGame.move(ChessGame(b, Black), m)
+        }
+
+        val expected = {
+          val b = """
+            8   ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+            7   ♟ ♟ ♟ ♟ . ♟ ♟ ♟
+            6   . . . . . . . .
+            5   . . . . ♟ . . .
+            4   . . . . ♙ . . .
+            3   . . . . . . . .
+            2   ♙ ♙ ♙ ♙ . ♙ ♙ ♙
+            1   ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+
+                a b c d e f g h
+          """
+          val h = List(Move(Position('e', 7), Position('e', 5)))
+          ChessGame(b, White, Undecided, h)
+        }
+
+        it("puts the pawn 2 square ahead"){
+          result should be (Right(expected))
+        }
+      }
+
       describe("when not first move") {
 
         val result = {

@@ -344,7 +344,7 @@ object ChessGame {
 
   def validBlackPawnMove(cg: ChessGame, p: Piece, m: Move): Either[String, ChessGame] =  {
     if (m.src.y == 6 && m.dest.y == 4 && m.src.x == m.dest.x) {
-      (cg.board(m.dest.x)(m.dest.y), cg.board(m.dest.x)(m.dest.y-1)) match {
+      (cg.board(m.dest.x)(m.dest.y), cg.board(m.dest.x)(m.dest.y+1)) match {
         case (None, None) => Right(ChessGame._move(cg, p, m))
         case (_, _) => Left("Invalid move")
       }
