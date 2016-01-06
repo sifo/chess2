@@ -179,7 +179,7 @@ object ChessGame {
       Left("out of bounds move")
     } else {
       (cg.board(m.src.x)(m.src.y), cg.board(m.dest.x)(m.dest.y)) match {
-        case (None, _) => Left(s"No piece in ${m.src.x}${m.src.y}.")
+        case (None, _) => Left(s"No piece in ${m.src.a}${m.src.b}.")
         case (Some(p), _) if(cg.currentPlayer != Player.getPlayer(p)) => Left(s"${cg.currentPlayer} turn.")
         case (Some(p), Some(p2)) if (Player.getPlayer(p) == Player.getPlayer(p2)) => Left("can't take your own piece")
         case (Some(p), _) if (checkedByOpponentAfterMove(cg, p, m)) => Left("Can't put yourself in check")
@@ -437,6 +437,9 @@ object Position {
   def apply(x: Char, y:Int) = new Position(x, y)
 }
 case class Position(val x: Int, val y: Int) {
+  val a: Char = (x + 97).toChar
+  val b: Int = y + 1
+
   def this(x: Char, y: Int) {
     this(x - 97, y - 1)
   }
@@ -469,8 +472,8 @@ object Chess {
             case Right(x) =>
               cg = x
               cg.status match {
-                case Stalemate(p) => println(s"Stalemate! $p can no longer move."); running = false
-                case Checkmate(p) => println(s"Checkmate! ${p} wins."); running = false
+                case Stalemate(p) => println(ChessGame.toString(cg)); println(s"Stalemate! $p can no longer move."); running = false
+                case Checkmate(p) => println(ChessGame.toString(cg)); println(s"Checkmate! ${p} wins."); running = false
                 case PromotionPending(d) =>
                   println(s"""Promote pending for ${cg.currentPlayer}. Type "queen", "rook", "bishop" or "knight".""")
                 case _ => 
