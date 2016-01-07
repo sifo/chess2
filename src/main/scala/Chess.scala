@@ -35,7 +35,7 @@ case object BlackBishop extends Piece
 case object BlackKnight extends Piece
 
 case object Player {
-  def getPlayer(p: Piece): Player = {
+  def owner(p: Piece): Player = {
     p match {
       case WhitePawn| WhiteRook | WhiteQueen | WhiteKing | WhiteBishop | WhiteKnight => White
       case BlackPawn| BlackRook | BlackQueen | BlackKing | BlackBishop | BlackKnight => Black
@@ -103,12 +103,6 @@ object ChessGame {
         Left(s"""Promotion pending for ${cg.currentPlayer}. Type "queen", "rook", "bishop" or "knight".""")
     }
   }
-  def switchPlayer(p: Player): Player = {
-    p match {
-      case Black => White
-      case White => Black
-    }
-  }
 
   def replace(cg: ChessGame, p: Option[Piece], pos: Position): ChessGame = {
     val idx = ChessGame.length * (ChessGame.length-1-pos.y) + pos.x
@@ -122,9 +116,7 @@ object ChessGame {
       for(j <- 0 to ChessGame.length - 1) {
         val pos = Position(i,j)
         validMove(cg, Move(src, pos)) match {
-          case Right(x) =>
-            res = res :+ pos
-          case Left(x) =>
+          case Right(x) => res = res :+ pos
           case _ =>
         }
       }
@@ -140,7 +132,7 @@ object ChessGame {
     for(i <- 0 to ChessGame.length - 1) {
       for(j <- 0 to ChessGame.length - 1) {
         cg.board(i)(j) match {
-          case Some(piece) if (Player.getPlayer(piece) == cg.currentPlayer) =>
+          case Some(piece) if (Player.owner(piece) == cg.currentPlayer) =>
             val tmp = moves(cg, piece, Position(i,j))
             val bbb = cg
             if(!tmp.isEmpty) {
@@ -175,10 +167,10 @@ object ChessGame {
     } else {
       (cg.board(m.src.x)(m.src.y), cg.board(m.dest.x)(m.dest.y)) match {
         case (None, _) => Left(s"No piece in ${m.src.a}${m.src.b}.")
-        case (Some(p), _) if(cg.currentPlayer != Player.getPlayer(p)) => Left(s"${cg.currentPlayer} turn.")
-        case (Some(p), Some(p2)) if (Player.getPlayer(p) == Player.getPlayer(p2)) => Left("can't take your own piece")
+        case (Some(p), _) if(cg.currentPlayer != Player.owner(p)) => Left(s"${cg.currentPlayer} turn.")
+        case (Some(p), Some(p2)) if (Player.owner(p) == Player.owner(p2)) => Left("can't take your own piece")
         case (Some(p), _) if (checkedByOpponentAfterMove(cg, p, m)) => Left("Can't put yourself in check")
-        case (Some(p), _) => _validMove(cg, p, m) 
+        case (Some(p), _) => _validMove(cg, p, m)
       }
     }
   }
@@ -214,7 +206,7 @@ object ChessGame {
         for(i <- 0 to ChessGame.length - 1)
           for(j <- 0 to ChessGame.length - 1)
             cg.board(i)(j) match {
-              case Some(p2) if (cg.currentPlayer != Player.getPlayer(p2)) =>
+              case Some(p2) if (cg.currentPlayer != Player.owner(p2)) =>
                 _validMove(cg, p2, Move(Position(i, j), kingPos)) match {
                   case Right(x) => return true
                   case Left(_) =>
@@ -227,12 +219,12 @@ object ChessGame {
   }
   def checkedByOpponentAfterMove(cg: ChessGame, p: Piece, m: Move): Boolean = {
     val cg2 = ChessGame._move(cg, p, m)
-    getKingPosition(cg2, Player.getPlayer(p)) match {
+    getKingPosition(cg2, Player.owner(p)) match {
       case Some(kingPos) =>
         for(i <- 0 to ChessGame.length - 1)
           for(j <- 0 to ChessGame.length - 1)
             cg.board(i)(j) match {
-              case Some(p2) if (Player.getPlayer(p) != Player.getPlayer(p2)) =>
+              case Some(p2) if (Player.owner(p) != Player.owner(p2)) =>
                 _validMove(cg2, p2, Move(Position(i, j), kingPos)) match {
                   case Right(x) => return true
                   case Left(_) =>
