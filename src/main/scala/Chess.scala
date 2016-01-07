@@ -69,6 +69,7 @@ object ChessGame {
     res += "\n     a b c d e f g h\n"
     res
   }
+
   def promote(cg: ChessGame, p: Piece): Either[String, ChessGame] = {
     cg.status match {
       case PromotionPending(dest) =>
@@ -82,6 +83,7 @@ object ChessGame {
       case _ => Left("Not waiting for promotion.")
     }
   }
+
   def move(cg: ChessGame, m: Move): Either[String, ChessGame] =  {
     cg.status match {
       case Undecided => 
@@ -110,7 +112,7 @@ object ChessGame {
     ChessGame(arr, cg.currentPlayer, cg.status, cg.history)
   }
 
-  def moves(cg: ChessGame, piece: Piece, src: Position): List[Position] = {
+  def moves(cg: ChessGame, src: Position): List[Position] = {
     var res: List[Position] = List[Position]()
     for(i <- 0 to ChessGame.length - 1) {
       for(j <- 0 to ChessGame.length - 1) {
@@ -133,7 +135,7 @@ object ChessGame {
       for(j <- 0 to ChessGame.length - 1) {
         cg.board(i)(j) match {
           case Some(piece) if (Player.owner(piece) == cg.currentPlayer) =>
-            val tmp = moves(cg, piece, Position(i,j))
+            val tmp = moves(cg, Position(i,j))
             val bbb = cg
             if(!tmp.isEmpty) {
               return false
@@ -217,6 +219,7 @@ object ChessGame {
       case None => false
     }
   }
+
   def checkedByOpponentAfterMove(cg: ChessGame, m: Move): Boolean = {
     val cg2 = ChessGame._move(cg, m)
     getKingPosition(cg2, cg.currentPlayer) match {
