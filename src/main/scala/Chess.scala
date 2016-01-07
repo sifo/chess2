@@ -2,21 +2,21 @@ package com.heapseven.chess
 import scala.util.matching.Regex
 
 object Piece {
-  def toString(p: Option[Piece]): String = {
+  def toChar(p: Option[Piece]): Char = {
     p match {
-      case None => "."
-      case Some(WhitePawn) => "\u2659"
-      case Some(WhiteRook) => "\u2656"
-      case Some(WhiteQueen) => "\u2655"
-      case Some(WhiteKing) => "\u2654"
-      case Some(WhiteBishop) => "\u2657"
-      case Some(WhiteKnight) => "\u2658"
-      case Some(BlackPawn) => "\u265F"
-      case Some(BlackRook) => "\u265C"
-      case Some(BlackQueen) => "\u265B"
-      case Some(BlackKing) => "\u265A"
-      case Some(BlackBishop) => "\u265D"
-      case Some(BlackKnight) => "\u265E"
+      case None => '.'
+      case Some(WhitePawn) => '♙'
+      case Some(WhiteRook) => '♖'
+      case Some(WhiteQueen) => '♕'
+      case Some(WhiteKing) => '♔'
+      case Some(WhiteBishop) => '♗'
+      case Some(WhiteKnight) => '♘'
+      case Some(BlackPawn) => '♟'
+      case Some(BlackRook) => '♜'
+      case Some(BlackQueen) => '♛'
+      case Some(BlackKing) => '♚'
+      case Some(BlackBishop) => '♝'
+      case Some(BlackKnight) => '♞'
     }
   }
 }
@@ -41,16 +41,11 @@ case object Player {
       case BlackPawn| BlackRook | BlackQueen | BlackKing | BlackBishop | BlackKnight => Black
     }
   }
+  def opponent(p: Player): Player = p match { case White => Black; case Black => White }
 }
-sealed abstract class Player {
-  def opponent: Player
-}
-case object White extends Player {
-  val opponent = Black
-}
-case object Black extends Player {
-  val opponent = White
-}
+sealed abstract class Player 
+case object White extends Player
+case object Black extends Player
 
 object ChessGame {
 
@@ -67,7 +62,7 @@ object ChessGame {
     for(j <- ChessGame.length - 1 to 0 by -1){
       res += "  " + (j + 1) + "  "
       for(i <- 0 to ChessGame.length - 1){
-        res += Piece.toString(cg.board(i)(j)) + " "
+        res += Piece.toChar(cg.board(i)(j)) + " "
       }
       res += "\n"
     }
@@ -81,7 +76,7 @@ object ChessGame {
         case (BlackRook | BlackQueen | BlackBishop | BlackKnight, Black, Some(BlackPawn))
            | (WhiteRook | WhiteQueen | WhiteBishop | WhiteKnight, White, Some(WhitePawn)) =>
           val cg2 = ChessGame.replace(cg, Some(p), dest)
-          Right(ChessGame(cg2.board, cg2.currentPlayer.opponent, Undecided, cg2.history))
+          Right(ChessGame(cg2.board, Player.opponent(cg2.currentPlayer), Undecided, cg2.history))
         case (_, _, _) => Left("Invalid action.")
       }
       case _ => Left("Not waiting for promotion.")
@@ -93,7 +88,7 @@ object ChessGame {
         ChessGame.validMove(cg, m) match {
           case Right(cg2) =>
             if(isMated(cg2)) {
-              Right(ChessGame(cg2.board, cg2.currentPlayer, Checkmate(cg2.currentPlayer.opponent), cg2.history))
+              Right(ChessGame(cg2.board, cg2.currentPlayer, Checkmate(Player.opponent(cg2.currentPlayer)), cg2.history))
             } else if(isStalemated(cg2)) {
               Right(ChessGame(cg2.board, cg2.currentPlayer, Stalemate(cg2.currentPlayer), cg2.history))
             } else {
@@ -117,7 +112,7 @@ object ChessGame {
 
   def replace(cg: ChessGame, p: Option[Piece], pos: Position): ChessGame = {
     val idx = ChessGame.length * (ChessGame.length-1-pos.y) + pos.x
-    val arr = cg._board.updated(idx, p)
+    val arr = cg.board.updated(idx, p)
     ChessGame(arr, cg.currentPlayer, cg.status, cg.history)
   }
 
@@ -161,13 +156,13 @@ object ChessGame {
   def _move(cg: ChessGame, p: Piece, m: Move): ChessGame = {
     val newBoard = {
       val c = ChessGame.replace(cg, cg.board(m.src.x)(m.src.y), m.dest)
-      ChessGame.replace(c, None, m.src)._board
+      ChessGame.replace(c, None, m.src).board
     }
     val (player, status) = {
       p match {
         case WhitePawn if m.dest.y == 7 => (cg.currentPlayer, PromotionPending(m.dest))
         case BlackPawn if m.dest.y == 0 => (cg.currentPlayer, PromotionPending(m.dest))
-        case _ => (cg.currentPlayer.opponent, Undecided)
+        case _ => (Player.opponent(cg.currentPlayer), Undecided)
       }
     }
     ChessGame(newBoard, player, status, cg.history :+ m)
@@ -393,7 +388,7 @@ object ChessGame {
   }
   def convert(s: String): List[Option[Piece]] = {
     val p = List('♖', '♘', '♗', '♕', '♔', '♙', '♜', '♞',  '♝',  '♛',  '♚',  '♟',  '.')
-    val r = s.filter(p.contains(_)).toList.map(convertChar(_))
+    val r = s.filter(p.contains(_)).map(convertChar(_)).toList
     if(r.length != 64) 
       throw new IllegalArgumentException("the board should have 64 valid chess characters")
     r
@@ -503,7 +498,7 @@ object Chess {
           }
         case "draw" | "d" =>
           cg.status match {
-            case Undecided => cg = ChessGame(cg.board, cg.currentPlayer.opponent, DrawRequest, cg.history)
+            case Undecided => cg = ChessGame(cg.board, Player.opponent(cg.currentPlayer), DrawRequest, cg.history)
             case DrawRequest => println("It's draw!"); running = false
             case _ =>
           }
@@ -511,7 +506,7 @@ object Chess {
           cg.status match {
             case Undecided => println("There is no draw request pending.")
             case DrawRequest =>
-              cg = ChessGame(cg.board, cg.currentPlayer.opponent, Undecided, cg.history)
+              cg = ChessGame(cg.board, Player.opponent(cg.currentPlayer), Undecided, cg.history)
               println("Draw request denied!")
             case _ =>
           }
