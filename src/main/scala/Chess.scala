@@ -113,6 +113,13 @@ object ChessGame {
   }
 
   def moves(cg: ChessGame, src: Position): List[Position] = {
+    cg.board
+      .zipWithIndex
+      .map { t => Position(t._2) }
+      .filter { p => validMove(cg, Move(src, p)).isRight }
+  }
+
+  def moves2(cg: ChessGame, src: Position): List[Position] = {
     var res: List[Position] = List[Position]()
     for(i <- 0 to ChessGame.length - 1) {
       for(j <- 0 to ChessGame.length - 1) {
@@ -131,13 +138,23 @@ object ChessGame {
   def isStalemated(cg: ChessGame): Boolean = hasNoLegalMove(cg) && !isChecked(cg)
 
   def hasNoLegalMove(cg: ChessGame): Boolean = {
+    cg.board
+      .zipWithIndex
+      .filter { t =>
+        t._1 match {
+          case Some(piece) => Player.owner(piece) == cg.currentPlayer && !moves(cg, Position(t._2)).isEmpty
+          case _ => false
+        }
+      }
+      .isEmpty
+  }
+
+  def hasNoLegalMove2(cg: ChessGame): Boolean = {
     for(i <- 0 to ChessGame.length - 1) {
       for(j <- 0 to ChessGame.length - 1) {
         cg.board(i)(j) match {
           case Some(piece) if (Player.owner(piece) == cg.currentPlayer) =>
-            val tmp = moves(cg, Position(i,j))
-            val bbb = cg
-            if(!tmp.isEmpty) {
+            if(!moves(cg, Position(i,j)).isEmpty) {
               return false
             }
           case _ =>
@@ -171,7 +188,7 @@ object ChessGame {
         case (None, _) => Left(s"No piece in ${m.src.a}${m.src.b}.")
         case (Some(p), _) if(cg.currentPlayer != Player.owner(p)) => Left(s"${cg.currentPlayer} turn.")
         case (Some(p), Some(p2)) if (Player.owner(p) == Player.owner(p2)) => Left("can't take your own piece")
-        case (Some(_), _) if (checkedByOpponentAfterMove(cg, m)) => Left("Can't put yourself in check")
+        case (Some(_), _) if (isCheckedAfterMove(cg, m)) => Left("Can't put yourself in check")
         case (Some(p), _) => _validMove(cg, p, m)
       }
     }
@@ -192,10 +209,22 @@ object ChessGame {
       }
   }
 
-  def getKingPosition(cg: ChessGame, player: Player): Option[Position] = {
+  def kingPosition(cg: ChessGame): Option[Position] = {
+    val positions = cg.board
+      .zipWithIndex
+      .filter { t =>
+        (t._1, cg.currentPlayer) match {
+          case (Some(WhiteKing), White) | (Some(BlackKing), Black) => true
+          case _ => false
+        }
+      }
+    if(positions.isEmpty) None else Some(Position(positions(0)._2))
+  }
+
+  def kingPosition2(cg: ChessGame): Option[Position] = {
     for(i <- 0 to ChessGame.length - 1)
       for(j <- 0 to ChessGame.length - 1)
-        (cg.board(i)(j), player) match {
+        (cg.board(i)(j), cg.currentPlayer) match {
           case (Some(WhiteKing), White) | (Some(BlackKing), Black) => return Some(Position(i, j))
           case (_, _) =>
         }
@@ -203,7 +232,25 @@ object ChessGame {
   }
 
   def isChecked(cg: ChessGame): Boolean = {
-    getKingPosition(cg, cg.currentPlayer) match {
+    kingPosition(cg) match {
+      case Some(kingPos) =>
+        cg.board
+          .zipWithIndex
+          .filter { t =>
+            t._1 match {
+              case Some(p) =>
+                cg.currentPlayer != Player.owner(p) &&
+                  _validMove(cg, p, Move(Position(t._2), kingPos)).isRight
+              case _ => false
+            }
+          }
+          .size > 0
+      case None => false
+    }
+  }
+
+  def isChecked2(cg: ChessGame): Boolean = {
+    kingPosition(cg) match {
       case Some(kingPos) =>
         for(i <- 0 to ChessGame.length - 1)
           for(j <- 0 to ChessGame.length - 1)
@@ -220,23 +267,9 @@ object ChessGame {
     }
   }
 
-  def checkedByOpponentAfterMove(cg: ChessGame, m: Move): Boolean = {
+  def isCheckedAfterMove(cg: ChessGame, m: Move): Boolean = {
     val cg2 = ChessGame._move(cg, m)
-    getKingPosition(cg2, cg.currentPlayer) match {
-      case Some(kingPos) =>
-        for(i <- 0 to ChessGame.length - 1)
-          for(j <- 0 to ChessGame.length - 1)
-            cg.board(i)(j) match {
-              case Some(p2) if (cg.currentPlayer != Player.owner(p2)) =>
-                _validMove(cg2, p2, Move(Position(i, j), kingPos)) match {
-                  case Right(x) => return true
-                  case Left(_) =>
-                }
-              case _ =>
-            }
-        false
-      case None => false
-    }
+    isChecked(ChessGame(cg2.board, cg.currentPlayer, cg2.status, cg2.history))
   }
 
   def validKingMove(cg: ChessGame, m: Move): Either[String, ChessGame] = {
@@ -423,12 +456,15 @@ case class ChessGame(val _board: List[Option[Piece]], val currentPlayer: Player,
 }
 
 object Position {
+  def apply(x: Int) = new Position(x)
   def apply(x: Char, y:Int) = new Position(x, y)
 }
 case class Position(val x: Int, val y: Int) {
   val a: Char = (x + 97).toChar
   val b: Int = y + 1
-
+  def this(x: Int) {
+    this(x % ChessGame.length, (ChessGame.length - 1) - x / ChessGame.length)
+  }
   def this(x: Char, y: Int) {
     this(x - 97, y - 1)
   }
