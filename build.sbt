@@ -1,4 +1,4 @@
-name := "vote"
+name := "chess"
 
 organization := "com.heapseven"
 
