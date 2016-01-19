@@ -544,6 +544,7 @@ object Chess {
         case "restart" | "r" => cg = ChessGame()
         case "exit" | "e" => running = false
         case "help" | "h" =>
+          println("'d2d4' to move the piece in 'd2' to 'd4'.")
           println("'d' or 'draw' to ask draw to opponent.")
           println("'r' or 'restart' to restart the game.")
           println(""""queen", "rook", "bishop", "knight", to promote.""")
