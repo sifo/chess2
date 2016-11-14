@@ -11,5 +11,5 @@ libraryDependencies ++= Seq(
   "org.scalacheck" %% "scalacheck" % "1.12.1" % "test" withSources() withJavadoc()
 )
 
-initialCommands := "import com.heapseven.vote._"
+initialCommands := "import com.heapseven.chess._"
 
